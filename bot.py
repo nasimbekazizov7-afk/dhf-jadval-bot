@@ -104,10 +104,24 @@ def block(l):
     s+=["   👤 %s — %s, <b>%s</b>-хона"%(g,a,b) for g,a,b in l["who"]]
     return "\n".join(s)
 
+STATE=".state/sent.txt"
+def already(key):
+    try: return key in open(STATE,encoding="utf-8").read().split("\n")
+    except Exception: return False
+def mark(key):
+    os.makedirs(".state",exist_ok=True)
+    old=[]
+    try: old=[x for x in open(STATE,encoding="utf-8").read().split("\n") if x.strip()]
+    except Exception: pass
+    old.append(key)
+    open(STATE,"w",encoding="utf-8").write("\n".join(old[-300:])+"\n")
+
 def digest():
     day=dt.datetime.now(TZ).date()+dt.timedelta(days=1)
+    key="digest-%s"%day
+    if already(key): print("бу кунги дайджест аллақачон юборилган"); return
     ls=[l for l in LESSONS if l["d"]==day]
-    if not ls: print("эртага дарс йўқ"); return
+    if not ls: print("эртага дарс йўқ"); mark(key); return
     p=["📅 <b>Эртага — %s, %s</b>\nДавлат-ҳуқуқий фанлар кафедраси машғулотлари\n"
        %(day.strftime("%d.%m.%Y"),KUN[day.weekday()])]
     for t in SLOTS:
@@ -115,18 +129,23 @@ def digest():
         if not cur: continue
         p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
     p.append("<i>Ҳаммага сермаҳсул иш куни тилаймиз!</i>")
-    send("\n".join(p).strip())
+    send("\n".join(p).strip()); mark(key)
 
 def remind(slot):
     now=dt.datetime.now(TZ); today=now.date()
+    key="remind-%s-%s"%(today,slot)
+    if already(key): print("бу эслатма аллақачон юборилган"); return
     ls=[l for l in LESSONS if l["d"]==today and l["t"]==slot]
-    if not ls: print("бугун %s да дарс йўқ"%slot); return
+    if not ls: print("бугун %s да дарс йўқ"%slot); mark(key); return
     hh,mm=(int(x) for x in slot.split(":"))
-    tgt=now.replace(hour=hh,minute=mm,second=0,microsecond=0)-dt.timedelta(minutes=10)
-    w=(tgt-now).total_seconds()
-    if w>0: print("кутиш %ds"%w); time.sleep(min(w,1800))
+    start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+    if now>=start: print("дарс бошланиб бўлган, эслатма юборилмади"); mark(key); return
+    w=(start-dt.timedelta(minutes=10)-now).total_seconds()
+    if w>0: print("кутиш %ds"%w); time.sleep(min(w,2400))
+    qoldi=max(int((start-dt.datetime.now(TZ)).total_seconds()//60),1)
     for l in ls:
-        send("⏰ <b>10 дақиқадан сўнг — %s</b>\n\n%s"%(slot,block(l))); time.sleep(1)
+        send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,slot,block(l))); time.sleep(1)
+    mark(key)
 
 def test():
     n=dt.datetime.now(TZ)
