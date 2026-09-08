@@ -1,26 +1,3 @@
-
-
-if len(sys.argv)>1 and sys.argv[1]=="diag":
-    import urllib.error
-    def call(name,q=""):
-        u="https://api.telegram.org/bot%s/%s%s"%(TOKEN,name,q)
-        try:
-            print(name,"->",urllib.request.urlopen(u,timeout=20).read().decode()[:400])
-        except urllib.error.HTTPError as e:
-            print(name,"-> ХАТО",e.code,e.read().decode()[:400])
-        except Exception as e:
-            print(name,"-> ХАТО",type(e).__name__)
-    print("CHAT_ID узунлиги:",len(CHAT),"| биринчи белги:",CHAT[:1])
-    call("getMe")
-    call("getChat","?chat_id="+urllib.parse.quote(CHAT))
-    b=urllib.parse.urlencode({"chat_id":CHAT,"text":"диагностика"}).encode()
-    try:
-        rq=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=b)
-        print("sendMessage ->",urllib.request.urlopen(rq,timeout=20).read().decode()[:400])
-    except urllib.error.HTTPError as e:
-        print("sendMessage -> ХАТО",e.code,e.read().decode()[:400])
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """ДҲФ кафедраси — Telegram эслатма боти (мустақил файл, жадвал ичида).
    python bot.py digest | remind 9:00 | test"""
 import os,sys,time,json,urllib.request,urllib.parse,datetime as dt
@@ -151,8 +128,29 @@ def test():
     send("✅ <b>Синов хабари</b>\nБот ишламоқда. Ҳозирги вақт: %s\nЖадвалдаги машғулотлар: %d"
          %(n.strftime("%d.%m.%Y %H:%M"),len(LESSONS)))
 
+def diag():
+    import urllib.error
+    def call(name,q=""):
+        u="https://api.telegram.org/bot%s/%s%s"%(TOKEN,name,q)
+        try: print(name,"->",urllib.request.urlopen(u,timeout=20).read().decode("utf-8","replace")[:600])
+        except urllib.error.HTTPError as e: print(name,"-> ХАТО",e.code,e.read().decode("utf-8","replace")[:600])
+        except Exception as e: print(name,"-> ХАТО",type(e).__name__,e)
+    print("TOKEN len:",len(TOKEN or ""),"| bot_id:",(TOKEN or "").split(":")[0])
+    print("CHAT:",repr(CHAT))
+    call("getMe")
+    call("getChat","?chat_id="+urllib.parse.quote(CHAT or ""))
+    b=urllib.parse.urlencode({"chat_id":CHAT,"text":"диагностика"}).encode()
+    try:
+        rq=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=b)
+        print("sendMessage ->",urllib.request.urlopen(rq,timeout=20).read().decode("utf-8","replace")[:600])
+    except urllib.error.HTTPError as e: print("sendMessage -> ХАТО",e.code,e.read().decode("utf-8","replace")[:600])
+    except Exception as e: print("sendMessage -> ХАТО",type(e).__name__,e)
+    print("--- getUpdates ---")
+    call("getUpdates","?limit=20")
+
 if __name__=="__main__":
     c=sys.argv[1] if len(sys.argv)>1 else "test"
     if c=="digest": digest()
     elif c=="remind": remind(sys.argv[2])
+    elif c=="diag": diag()
     else: test()
