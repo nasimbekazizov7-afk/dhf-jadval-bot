@@ -242,10 +242,61 @@ def javob(daqiqa=25):
             print("жавоб юборилди")
     print("тинглаш тугади")
 
+def saqla():
+    if not os.environ.get("GITHUB_ACTIONS"): return
+    os.system('git config user.name "dhf-bot"; '
+              'git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; '
+              'git add .state; git commit -m "holat" >/dev/null 2>&1; '
+              'git pull --rebase --autostash >/dev/null 2>&1; git push >/dev/null 2>&1')
+
+def vazifa():
+    now=dt.datetime.now(TZ); today=now.date()
+    if now.hour==18:
+        if not already("digest-%s"%(today+dt.timedelta(days=1))):
+            digest(); saqla()
+    if today.weekday()<5:
+        for slot in SLOTS:
+            hh,mm=(int(x) for x in slot.split(":"))
+            start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+            d=(start-now).total_seconds()
+            if 0<d<=660 and not already("remind-%s-%s"%(today,slot)):
+                remind(slot); saqla()
+
+def loop(daqiqa=330):
+    if not TOKEN: print("!! TELEGRAM_TOKEN йўқ"); sys.exit(1)
+    end=time.time()+daqiqa*60; off=0
+    r=api("getUpdates",{"timeout":0,"offset":-1},timeout=30)
+    if r.get("result"): off=r["result"][-1]["update_id"]+1
+    print("цикл бошланди, offset=%d, %d дақиқа"%(off,daqiqa))
+    while time.time()<end:
+        try: vazifa()
+        except Exception as e: print("вазифа хатоси:",e)
+        r=api("getUpdates",{"timeout":30,"offset":off})
+        for u in r.get("result",[]):
+            off=u["update_id"]+1
+            m=u.get("message") or u.get("edited_message") or {}
+            cid=(m.get("chat") or {}).get("id"); txt=m.get("text") or ""
+            if cid is None or not txt: continue
+            cid=str(cid); low=txt.lower(); today=dt.datetime.now(TZ).date()
+            if "эртага" in low or low.startswith("/ertaga"):
+                reply(cid,day_text(today+dt.timedelta(days=1),"Эртага"))
+            elif "ҳафта" in low or low.startswith("/hafta"):
+                reply(cid,week_text(today))
+            elif "бугун" in low or low.startswith("/bugun"):
+                reply(cid,day_text(today,"Бугун"))
+            else:
+                reply(cid,HELLO+"\n"+day_text(today,"Бугун")+"\n\n"
+                      +day_text(today+dt.timedelta(days=1),"Эртага"))
+            print("жавоб юборилди")
+    try: vazifa()
+    except Exception as e: print("вазифа хатоси:",e)
+    print("цикл тугади")
+
 if __name__=="__main__":
     c=sys.argv[1] if len(sys.argv)>1 else "test"
     if c=="digest": digest()
     elif c=="remind": remind(sys.argv[2])
     elif c=="diag": diag()
     elif c=="javob": javob(int(sys.argv[2]) if len(sys.argv)>2 else 25)
+    elif c=="loop": loop(int(sys.argv[2]) if len(sys.argv)>2 else 330)
     else: test()
