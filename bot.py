@@ -139,10 +139,8 @@ def remind(slot):
     if not ls: print("бугун %s да дарс йўқ"%slot); mark(key); return
     hh,mm=(int(x) for x in slot.split(":"))
     start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
-    if now>=start: print("дарс бошланиб бўлган, эслатма юборилмади"); mark(key); return
-    w=(start-dt.timedelta(minutes=10)-now).total_seconds()
-    if w>0: print("кутиш %ds"%w); time.sleep(min(w,2400))
-    qoldi=max(int((start-dt.datetime.now(TZ)).total_seconds()//60),1)
+    qoldi=int((start-now).total_seconds()//60)
+    if qoldi<1: print("дарс бошланиб бўлган, эслатма юборилмади"); mark(key); return
     for l in ls:
         send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,slot,block(l))); time.sleep(1)
     mark(key)
