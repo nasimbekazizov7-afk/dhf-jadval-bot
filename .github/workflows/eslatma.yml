@@ -1,0 +1,60 @@
+name: ДҲФ дарс эслатмалари
+
+on:
+  schedule:
+    # Вақтлар UTC да. Тошкент = UTC+5. Соат бошидан узоқ вақтлар танланган.
+    - cron: "7 13 * * *"      # 18:07 Тошкент — эртанги машғулотлар рўйхати
+    - cron: "47 13 * * *"     # 18:47 — заҳира
+    - cron: "33 3 * * 1-5"    # 08:33 — 9:00 даги дарс учун
+    - cron: "48 3 * * 1-5"    # 08:48 — заҳира
+    - cron: "3 5 * * 1-5"     # 10:03 — 10:30 даги дарс учун
+    - cron: "18 5 * * 1-5"    # 10:18 — заҳира
+    - cron: "33 6 * * 1-5"    # 11:33 — 12:00 даги дарс учун
+    - cron: "48 6 * * 1-5"    # 11:48 — заҳира
+  workflow_dispatch:
+    inputs:
+      buyruq:
+        description: "digest | remind 9:00 | remind 10:30 | remind 12:00 | test | diag"
+        required: true
+        default: "test"
+
+permissions:
+  contents: write
+
+jobs:
+  xabar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Хабарни юбориш
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CRON: ${{ github.event.schedule }}
+          MANUAL: ${{ github.event.inputs.buyruq }}
+        run: |
+          if [ -n "$MANUAL" ]; then
+            python bot.py $MANUAL
+          else
+            case "$CRON" in
+              "7 13 * * *"|"47 13 * * *")     python bot.py digest ;;
+              "33 3 * * 1-5"|"48 3 * * 1-5")  python bot.py remind 9:00 ;;
+              "3 5 * * 1-5"|"18 5 * * 1-5")   python bot.py remind 10:30 ;;
+              "33 6 * * 1-5"|"48 6 * * 1-5")  python bot.py remind 12:00 ;;
+              *) echo "номаълум жадвал: $CRON" ;;
+            esac
+          fi
+      - name: Holatni saqlash
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain .state)" ]; then
+            git config user.name "dhf-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .state
+            git commit -m "holat: $(date -u +%F_%H-%M)"
+            git pull --rebase --autostash || true
+            git push
+          else
+            echo "uzgarish yuq"
+          fi
