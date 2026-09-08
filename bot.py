@@ -1,3 +1,24 @@
+
+
+if len(sys.argv)>1 and sys.argv[1]=="diag":
+    import urllib.error
+    def call(name,q=""):
+        u="https://api.telegram.org/bot%s/%s%s"%(TOKEN,name,q)
+        try:
+            print(name,"->",urllib.request.urlopen(u,timeout=20).read().decode()[:400])
+        except urllib.error.HTTPError as e:
+            print(name,"-> ХАТО",e.code,e.read().decode()[:400])
+        except Exception as e:
+            print(name,"-> ХАТО",type(e).__name__)
+    print("CHAT_ID узунлиги:",len(CHAT),"| биринчи белги:",CHAT[:1])
+    call("getMe")
+    call("getChat","?chat_id="+urllib.parse.quote(CHAT))
+    b=urllib.parse.urlencode({"chat_id":CHAT,"text":"диагностика"}).encode()
+    try:
+        rq=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=b)
+        print("sendMessage ->",urllib.request.urlopen(rq,timeout=20).read().decode()[:400])
+    except urllib.error.HTTPError as e:
+        print("sendMessage -> ХАТО",e.code,e.read().decode()[:400])
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ДҲФ кафедраси — Telegram эслатма боти (мустақил файл, жадвал ичида).
