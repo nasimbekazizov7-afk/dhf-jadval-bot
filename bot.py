@@ -82,15 +82,20 @@ CHAT=os.environ.get("TELEGRAM_CHAT_ID","").strip()
 def send(text):
     if not TOKEN or not CHAT:
         print("!! TELEGRAM_TOKEN ёки TELEGRAM_CHAT_ID берилмаган"); sys.exit(1)
-    body=urllib.parse.urlencode({"chat_id":CHAT,"text":text,"parse_mode":"HTML",
-        "disable_web_page_preview":"true"}).encode()
-    req=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=body)
-    for i in range(3):
-        try:
-            with urllib.request.urlopen(req,timeout=30) as r: print("OK",r.status); return True
-        except Exception as e:
-            print("хато (%d): %s"%(i+1,e)); time.sleep(5)
-    return False
+    ids=[c.strip() for c in CHAT.replace(";",",").split(",") if c.strip()]
+    ok=True
+    for cid in ids:
+        body=urllib.parse.urlencode({"chat_id":cid,"text":text,"parse_mode":"HTML",
+            "disable_web_page_preview":"true"}).encode()
+        sent=False
+        for i in range(3):
+            try:
+                req=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=body)
+                with urllib.request.urlopen(req,timeout=30) as r: print("OK",r.status); sent=True; break
+            except Exception as e:
+                print("хато (%d): %s"%(i+1,e)); time.sleep(3)
+        if not sent: ok=False
+    return ok
 
 def block(l):
     s=["<b>%s</b> · %s · <i>%s</i>"%(l["code"],l["ty"],l["pot"]),
