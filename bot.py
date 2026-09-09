@@ -82,6 +82,10 @@ CHAT=os.environ.get("TELEGRAM_CHAT_ID","").strip()
 STATE=".state/sent.txt"
 LOGF=".state/log.txt"
 OBUNA=".state/obuna.txt"
+ADMINF=".state/admin.txt"
+TUZ=".state/tuzatish.json"
+POTOKLAR=sorted({c["pot"] for c in CFG})
+FANLAR=sorted({c["sub"] for c in CFG})
 
 def logga(s):
     t=dt.datetime.now(TZ).strftime("%d.%m %H:%M:%S")
@@ -96,49 +100,105 @@ def logga(s):
         open(LOGF,"w",encoding="utf-8").write("\n".join(old[-250:])+"\n")
     except Exception as e: print("лог хатоси:",e)
 
+def royxat_oq(f):
+    try: return [x.strip() for x in open(f,encoding="utf-8").read().split("\n") if x.strip()]
+    except Exception: return []
+def royxat_yoz(f,l):
+    os.makedirs(".state",exist_ok=True)
+    open(f,"w",encoding="utf-8").write("\n".join(l)+("\n" if l else ""))
+
 def already(key):
     try: return key in open(STATE,encoding="utf-8").read().split("\n")
     except Exception: return False
-
 def mark(key):
-    os.makedirs(".state",exist_ok=True)
-    old=[]
-    try: old=[x for x in open(STATE,encoding="utf-8").read().split("\n") if x.strip()]
-    except Exception: pass
-    old.append(key)
-    open(STATE,"w",encoding="utf-8").write("\n".join(old[-300:])+"\n")
+    old=royxat_oq(STATE); old.append(key); royxat_yoz(STATE,old[-300:])
 
 # ---------- обуна ----------
-def obunalar():
-    try: return [x.strip() for x in open(OBUNA,encoding="utf-8").read().split("\n") if x.strip()]
-    except Exception: return []
-
-def obuna_yoz(lst):
-    os.makedirs(".state",exist_ok=True)
-    open(OBUNA,"w",encoding="utf-8").write("\n".join(lst)+("\n" if lst else ""))
-
+def obunalar(): return royxat_oq(OBUNA)
 def obuna_qosh(cid):
     cid=str(cid); l=obunalar()
     if cid in l: return False
-    l.append(cid); obuna_yoz(l); logga("янги обуна: %s (жами %d)"%(cid,len(l))); return True
-
+    l.append(cid); royxat_yoz(OBUNA,l); logga("янги обуна: %s (жами %d)"%(cid,len(l))); return True
 def obuna_ol(cid):
     cid=str(cid); l=obunalar()
     if cid not in l: return False
-    l=[x for x in l if x!=cid]; obuna_yoz(l); logga("обуна бекор: %s (жами %d)"%(cid,len(l))); return True
+    royxat_yoz(OBUNA,[x for x in l if x!=cid]); logga("обуна бекор: %s"%cid); return True
+def obunami(cid): return str(cid) in obunalar()
 
-def obunami(cid):
-    return str(cid) in obunalar()
+# ---------- админ ----------
+def adminlar(): return royxat_oq(ADMINF)
+def adminmi(cid): return str(cid) in adminlar()
+def admin_qosh(cid):
+    l=adminlar()
+    if str(cid) in l: return False
+    l.append(str(cid)); royxat_yoz(ADMINF,l); logga("янги админ: %s"%cid); return True
 
+# ---------- тузатишлар ----------
+def tuzatishlar():
+    try: return json.load(open(TUZ,encoding="utf-8"))
+    except Exception: return []
+def tuz_yoz(l):
+    os.makedirs(".state",exist_ok=True)
+    json.dump(l,open(TUZ,"w",encoding="utf-8"),ensure_ascii=False,indent=1)
+
+BASE=LESSONS
+_C={"k":None,"v":None}
+
+def pot_mos(code,pot):
+    if pot=="*": return True
+    c=code.upper(); p=pot.upper()
+    if c==p: return True
+    if p in [f.upper() for f in FANLAR]: return c.startswith(p)
+    return c.endswith(p)
+
+def qolla(base):
+    out=[]
+    for l in base:
+        n=dict(l); n["who"]=[list(w) for w in l["who"]]; out.append(n)
+    for t in tuzatishlar():
+        tur=t.get("tur"); sana=t.get("sana","*"); pot=t.get("pot","*"); vaqt=t.get("vaqt","*")
+        def mos(l):
+            if sana!="*" and str(l["d"])!=sana: return False
+            if not pot_mos(l["code"],pot): return False
+            if vaqt!="*" and l["t"]!=vaqt: return False
+            return True
+        if tur=="bekor":
+            out=[l for l in out if not mos(l)]
+        elif tur=="domla":
+            e=t.get("eski",""); y=t.get("yangi","")
+            for l in out:
+                if mos(l):
+                    for w in l["who"]:
+                        if e=="*" or e.lower() in w[1].lower(): w[1]=y
+        elif tur=="xona":
+            for l in out:
+                if mos(l):
+                    for w in l["who"]: w[2]=t.get("yangi","")
+        elif tur=="vaqt":
+            for l in out:
+                if mos(l): l["t"]=t.get("yangi",l["t"])
+        elif tur=="mavzu":
+            for l in out:
+                if mos(l): l["top"]=t.get("yangi",l["top"])
+    return out
+
+def LES():
+    try: k=open(TUZ,encoding="utf-8").read()
+    except Exception: k=""
+    if _C["k"]!=k: _C["k"]=k; _C["v"]=qolla(BASE)
+    return _C["v"]
+
+def SLOTLAR():
+    return sorted({l["t"] for l in LES()},key=lambda x:(int(x.split(":")[0]),int(x.split(":")[1])))
+
+# ---------- юбориш ----------
 def barcha_manzil():
     ids=[c.strip() for c in CHAT.replace(";",",").split(",") if c.strip()]
     for c in obunalar():
         if c not in ids: ids.append(c)
     return ids
 
-# ---------- юбориш ----------
 def bitta(cid,text,plain=False):
-    """бир чатга юбориш; True = муваффақият"""
     import urllib.error,re as _re
     p={"chat_id":cid,"text":(_re.sub(r"<[^>]+>","",text) if plain else text),
        "disable_web_page_preview":"true"}
@@ -156,7 +216,7 @@ def bitta(cid,text,plain=False):
             if e.code==400 and not plain: return bitta(cid,text,plain=True)
             if e.code==429: time.sleep(20); continue
             if e.code in (401,403,404):
-                if e.code in (403,400): obuna_ol(cid)
+                if e.code==403: obuna_ol(cid)
                 return False
             time.sleep(3)
         except Exception as e:
@@ -167,8 +227,7 @@ def bitta(cid,text,plain=False):
 def send(text):
     if not TOKEN or not CHAT:
         print("!! TELEGRAM_TOKEN ёки TELEGRAM_CHAT_ID берилмаган"); sys.exit(1)
-    ids=barcha_manzil()
-    ok=0
+    ids=barcha_manzil(); ok=0
     for cid in ids:
         if bitta(cid,text): ok+=1
         time.sleep(0.06)
@@ -186,11 +245,11 @@ def digest():
     day=dt.datetime.now(TZ).date()+dt.timedelta(days=1)
     key="digest-%s"%day
     if already(key): return
-    ls=[l for l in LESSONS if l["d"]==day]
+    ls=[l for l in LES() if l["d"]==day]
     if not ls: logga("эртага дарс йўқ"); mark(key); return
     p=["📅 <b>Эртага — %s, %s</b>\nДавлат-ҳуқуқий фанлар кафедраси машғулотлари\n"
        %(day.strftime("%d.%m.%Y"),KUN[day.weekday()])]
-    for t in SLOTS:
+    for t in SLOTLAR():
         cur=[l for l in ls if l["t"]==t]
         if not cur: continue
         p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
@@ -202,7 +261,7 @@ def remind(slot):
     now=dt.datetime.now(TZ); today=now.date()
     key="remind-%s-%s"%(today,slot)
     if already(key): return
-    ls=[l for l in LESSONS if l["d"]==today and l["t"]==slot]
+    ls=[l for l in LES() if l["d"]==today and l["t"]==slot]
     if not ls: logga("бугун %s да дарс йўқ"%slot); mark(key); return
     hh,mm=(int(x) for x in slot.split(":"))
     start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
@@ -218,8 +277,8 @@ def remind(slot):
 
 def test():
     n=dt.datetime.now(TZ)
-    send("✅ <b>Синов хабари</b>\nБот ишламоқда. Ҳозирги вақт: %s\nЖадвалдаги машғулотлар: %d\nОбуначилар: %d"
-         %(n.strftime("%d.%m.%Y %H:%M"),len(LESSONS),len(obunalar())))
+    send("✅ <b>Синов хабари</b>\nВақт: %s\nМашғулотлар: %d\nОбуначилар: %d\nТузатишлар: %d"
+         %(n.strftime("%d.%m.%Y %H:%M"),len(LES()),len(obunalar()),len(tuzatishlar())))
 
 def diag():
     import urllib.error
@@ -228,11 +287,10 @@ def diag():
         try: print(name,"->",urllib.request.urlopen(u,timeout=20).read().decode("utf-8","replace")[:600])
         except urllib.error.HTTPError as e: print(name,"-> ХАТО",e.code,e.read().decode("utf-8","replace")[:600])
         except Exception as e: print(name,"-> ХАТО",type(e).__name__,e)
-    print("TOKEN len:",len(TOKEN or ""),"| CHAT:",repr(CHAT),"| обуна:",obunalar())
+    print("CHAT:",repr(CHAT),"| обуна:",obunalar(),"| админ:",adminlar())
     call("getMe")
     for cid in barcha_manzil(): call("getChat","?chat_id="+urllib.parse.quote(cid))
     send("🔎 Диагностика хабари")
-    call("getUpdates","?limit=5")
 
 # ---------- интерфейс ----------
 YOQ="🔔 Эслатмани ёқиш"
@@ -247,10 +305,160 @@ def hello(cid):
     h=("👋 <b>ДҲФ кафедраси — дарс жадвали боти</b>\n"
        "Пастдаги тугмалардан фойдаланинг ёки /bugun, /ertaga, /hafta ёзинг.\n")
     if obunami(cid):
-        h+="🔔 Автоматик эслатма: <b>ЁҚИЛГАН</b> (ҳар дарсдан 10 дақиқа олдин ва кечқурун 18:00 да).\n"
+        h+="🔔 Автоматик эслатма: <b>ЁҚИЛГАН</b> (дарсдан 10 дақиқа олдин ва 18:00 да).\n"
     else:
         h+="🔕 Автоматик эслатма ўчиқ. Ёқиш учун «%s» тугмасини босинг.\n"%YOQ
+    if adminmi(cid): h+="🛠 Сиз админсиз — буйруқлар рўйхати: /yordam\n"
     return h
+
+YORDAM=("🛠 <b>Админ буйруқлари</b>\n\n"
+ "<b>Домлани алмаштириш</b>\n"
+ "<code>/domla сана поток эски > янги</code>\n"
+ "масалан: <code>/domla 10.09 1П Шоназаров > Азизов</code>\n"
+ "доимий қилиш учун сана ўрнига <code>*</code>: <code>/domla * 1П Шоназаров > Азизов</code>\n\n"
+ "<b>Дарс вақтини кўчириш</b>\n"
+ "<code>/vaqt сана поток эскивақт > янгивақт</code>\n"
+ "масалан: <code>/vaqt 10.09 1П 9:00 > 12:00</code>\n\n"
+ "<b>Хонани ўзгартириш</b>\n"
+ "<code>/xona сана поток вақт хона</code>\n"
+ "масалан: <code>/xona 10.09 1П 9:00 А-205</code>\n\n"
+ "<b>Мавзуни ўзгартириш</b>\n"
+ "<code>/mavzu сана поток вақт янги мавзу матни</code>\n\n"
+ "<b>Дарсни бекор қилиш</b>\n"
+ "<code>/bekor сана</code> ёки <code>/bekor сана поток</code>\n"
+ "масалан: <code>/bekor 10.09</code> — ўша куннинг ҳамма дарси\n\n"
+ "<b>Тузатишлар рўйхати:</b> <code>/royxat</code>\n"
+ "<b>Тузатишни ўчириш:</b> <code>/ochir 2</code>\n\n"
+ "Сана: <code>10.09</code>, <code>10.09.2026</code>, <code>bugun</code>, <code>ertaga</code> ёки <code>*</code>\n"
+ "Потоклар: 1К, 1КРУС, 1П, 1ПРУС, 1ТА, 1ТБ, 1ТД, 1ТРУС ёки <code>*</code>\n"
+ "Фақат бир фан учун: <code>ДҲН1П</code> ёки <code>КОНС1П</code>; бутун фан: <code>ДҲН</code>")
+
+def sana_ol(s):
+    s=s.strip().lower()
+    if s in ("*","hamma","ҳамма","doim","доим"): return "*"
+    n=dt.datetime.now(TZ).date()
+    if s in ("bugun","бугун"): return str(n)
+    if s in ("ertaga","эртага"): return str(n+dt.timedelta(days=1))
+    p=s.replace("/",".").replace("-",".").split(".")
+    try:
+        d=int(p[0]); m=int(p[1]); y=int(p[2]) if len(p)>2 else n.year
+        if y<100: y+=2000
+        return str(dt.date(y,m,d))
+    except Exception: return None
+
+def pot_ol(s):
+    s=s.strip().upper()
+    if s in ("*","HAMMA","ҲАММА"): return "*"
+    for f in FANLAR:
+        if f.upper()==s: return f
+    for p in POTOKLAR:
+        if p.upper()==s: return p
+    for l in BASE:
+        if l["code"].upper()==s: return l["code"]
+    return None
+
+def vaqt_ol(s):
+    import re as _re
+    s=s.strip()
+    if s=="*": return "*"
+    m=_re.match(r"^(\d{1,2})[:.](\d{2})$",s)
+    return "%d:%02d"%(int(m.group(1)),int(m.group(2))) if m else None
+
+def _snap():
+    return set((str(l["d"]),l["t"],l["pot"],l["code"],l["top"],
+                tuple(tuple(w) for w in l["who"])) for l in LES())
+
+def tuz_qosh(rec):
+    old=_snap()
+    l=tuzatishlar(); l.append(rec); tuz_yoz(l)
+    new=_snap()
+    ozgardi=len(old-new)
+    if ozgardi==0:
+        l=tuzatishlar(); l.pop(); tuz_yoz(l)
+        return None
+    logga("тузатиш: %s (%d дарс)"%(rec,ozgardi))
+    return ozgardi
+
+def royxat_matn():
+    l=tuzatishlar()
+    if not l: return "📋 Ҳозирча ҳеч қандай тузатиш йўқ."
+    p=["📋 <b>Тузатишлар</b>"]
+    for i,t in enumerate(l,1):
+        s="%d) <b>%s</b> · сана: %s · поток: %s"%(i,t.get("tur"),t.get("sana"),t.get("pot"))
+        if t.get("vaqt","*")!="*": s+=" · вақт: %s"%t["vaqt"]
+        if t.get("eski"): s+=" · %s → %s"%(t["eski"],t.get("yangi",""))
+        elif t.get("yangi"): s+=" → %s"%t["yangi"]
+        p.append(s)
+    p.append("\nЎчириш: <code>/ochir рақам</code>")
+    return "\n".join(p)
+
+def admin_buyruq(cid,txt):
+    """админ буйруғи бўлса — жавоб матнини қайтаради, акс ҳолда None"""
+    t=txt.strip()
+    if not t.startswith("/"): return None
+    bosh=t.split()[0].lower().lstrip("/")
+    if bosh not in ("domla","vaqt","xona","mavzu","bekor","royxat","ochir","yordam","admin"):
+        return None
+    if bosh=="admin":
+        if not adminlar():
+            admin_qosh(cid); saqla()
+            return "🛠 Сиз админ сифатида қайд этилдингиз.\n\n"+YORDAM
+        return YORDAM if adminmi(cid) else "⛔️ Админ аллақачон белгиланган."
+    if not adminmi(cid):
+        return "⛔️ Бу буйруқ фақат админ учун."
+    if bosh=="yordam": return YORDAM
+    if bosh=="royxat": return royxat_matn()
+    qolgan=t[len(t.split()[0]):].strip()
+    if bosh=="ochir":
+        l=tuzatishlar()
+        try: n=int(qolgan)
+        except Exception: return "❌ Рақам киритинг: <code>/ochir 1</code>"
+        if not 1<=n<=len(l): return "❌ Бундай рақам йўқ. /royxat"
+        x=l.pop(n-1); tuz_yoz(l); saqla(); logga("тузатиш ўчирилди: %s"%x)
+        return "🗑 %d-тузатиш ўчирилди."%n
+    if bosh=="bekor":
+        a=qolgan.split()
+        if not a: return "❌ Намуна: <code>/bekor 10.09</code> ёки <code>/bekor 10.09 1П</code>"
+        s=sana_ol(a[0])
+        if not s: return "❌ Сана нотўғри: %s"%a[0]
+        p=pot_ol(a[1]) if len(a)>1 else "*"
+        if p is None: return "❌ Поток нотўғри: %s"%a[1]
+        n=tuz_qosh({"tur":"bekor","sana":s,"pot":p})
+        if not n: return "⚠️ Мос дарс топилмади (сана/поток текширинг)."
+        saqla(); return "🚫 <b>%d та дарс бекор қилинди</b> (%s, %s)."%(n,s,p)
+    if bosh in ("domla","vaqt"):
+        if ">" not in qolgan:
+            return ("❌ «>» белгиси керак.\nНамуна: <code>/domla 10.09 1П Шоназаров > Азизов</code>"
+                    if bosh=="domla" else
+                    "❌ «>» белгиси керак.\nНамуна: <code>/vaqt 10.09 1П 9:00 > 12:00</code>")
+        chap,ong=qolgan.split(">",1); ong=ong.strip(); a=chap.split()
+        if len(a)<3 or not ong: return "❌ Тўлиқ эмас. /yordam"
+        s=sana_ol(a[0]); p=pot_ol(a[1])
+        if not s: return "❌ Сана нотўғри: %s"%a[0]
+        if p is None: return "❌ Поток нотўғри: %s"%a[1]
+        eski=" ".join(a[2:])
+        if bosh=="domla":
+            n=tuz_qosh({"tur":"domla","sana":s,"pot":p,"eski":eski,"yangi":ong})
+            if not n: return "⚠️ «%s» домла бу дарсларда топилмади."%eski
+            saqla(); return "👤 <b>%d та дарсда</b> %s → <b>%s</b> (%s, %s)"%(n,eski,ong,s,p)
+        v1=vaqt_ol(eski); v2=vaqt_ol(ong)
+        if not v1 or not v2: return "❌ Вақт формати: 9:00, 10:30, 12:00"
+        n=tuz_qosh({"tur":"vaqt","sana":s,"pot":p,"vaqt":v1,"yangi":v2})
+        if not n: return "⚠️ %s да мос дарс топилмади."%v1
+        saqla(); return "🕘 <b>%d та дарс</b> %s → <b>%s</b> га кўчирилди (%s, %s)"%(n,v1,v2,s,p)
+    a=qolgan.split()
+    if len(a)<4: return "❌ Тўлиқ эмас. /yordam"
+    s=sana_ol(a[0]); p=pot_ol(a[1]); v=vaqt_ol(a[2]); qiymat=" ".join(a[3:])
+    if not s: return "❌ Сана нотўғри: %s"%a[0]
+    if p is None: return "❌ Поток нотўғри: %s"%a[1]
+    if not v: return "❌ Вақт нотўғри: %s"%a[2]
+    if bosh=="xona":
+        n=tuz_qosh({"tur":"xona","sana":s,"pot":p,"vaqt":v,"yangi":qiymat})
+        if not n: return "⚠️ Мос дарс топилмади."
+        saqla(); return "🚪 <b>%d та дарс</b> хонаси <b>%s</b> қилинди (%s, %s, %s)"%(n,qiymat,s,p,v)
+    n=tuz_qosh({"tur":"mavzu","sana":s,"pot":p,"vaqt":v,"yangi":qiymat})
+    if not n: return "⚠️ Мос дарс топилмади."
+    saqla(); return "📖 <b>%d та дарс</b> мавзуси янгиланди (%s, %s, %s)"%(n,s,p,v)
 
 def api(name,params,timeout=70):
     d=urllib.parse.urlencode(params).encode()
@@ -275,11 +483,11 @@ def reply(cid,text):
         time.sleep(0.3)
 
 def day_text(day,title):
-    ls=[l for l in LESSONS if l["d"]==day]
+    ls=[l for l in LES() if l["d"]==day]
     h="📅 <b>%s — %s, %s</b>"%(title,day.strftime("%d.%m.%Y"),KUN[day.weekday()])
     if not ls: return h+"\n\nБу куни дарс йўқ."
     p=[h,""]
-    for t in SLOTS:
+    for t in SLOTLAR():
         cur=[l for l in ls if l["t"]==t]
         if not cur: continue
         p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
@@ -287,11 +495,8 @@ def day_text(day,title):
 
 def week_text(today):
     mon=today-dt.timedelta(days=today.weekday())
-    out=[]
-    for i in range(5):
-        d=mon+dt.timedelta(days=i)
-        out.append(day_text(d,KUN[d.weekday()].capitalize()))
-    return "\n\n".join(out)
+    return "\n\n".join(day_text(mon+dt.timedelta(days=i),
+                       KUN[(mon+dt.timedelta(days=i)).weekday()].capitalize()) for i in range(5))
 
 def saqla():
     if not os.environ.get("GITHUB_ACTIONS"): return
@@ -305,7 +510,7 @@ def vazifa():
     if now.hour==18 and not already("digest-%s"%(today+dt.timedelta(days=1))):
         digest(); saqla()
     if today.weekday()<5:
-        for slot in SLOTS:
+        for slot in SLOTLAR():
             hh,mm=(int(x) for x in slot.split(":"))
             start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
             d=(start-now).total_seconds()
@@ -314,6 +519,8 @@ def vazifa():
 
 def xabarni_qayta_ishla(cid,txt):
     cid=str(cid); low=txt.lower(); today=dt.datetime.now(TZ).date()
+    j=admin_buyruq(cid,txt)
+    if j is not None: reply(cid,j); return
     if YOQ.lower() in low or low.startswith("/obuna") or low.startswith("/yoq"):
         yangi=obuna_qosh(cid); saqla()
         reply(cid,("🔔 <b>Эслатма ёқилди.</b>\nЭнди ҳар дарсдан <b>10 дақиқа олдин</b> ва кечқурун "
@@ -338,7 +545,8 @@ def loop(daqiqa=330):
     end=time.time()+daqiqa*60; off=0
     r=api("getUpdates",{"timeout":0,"offset":-1},timeout=30)
     if r.get("result"): off=r["result"][-1]["update_id"]+1
-    logga("цикл бошланди (%d дақиқа, обуна: %d)"%(daqiqa,len(obunalar()))); saqla()
+    logga("цикл бошланди (%d дақиқа, обуна: %d, тузатиш: %d)"
+          %(daqiqa,len(obunalar()),len(tuzatishlar()))); saqla()
     while time.time()<end:
         try: vazifa()
         except Exception as e: logga("вазифа хатоси: %s"%e)
