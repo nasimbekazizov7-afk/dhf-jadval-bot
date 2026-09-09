@@ -4,3 +4,6 @@
 09.09 16:46:16 | обуна бекор: 428503165 (жами 1)
 09.09 16:46:29 | янги обуна: 979853334 (жами 2)
 09.09 16:47:02 | обуна бекор: 979853334 (жами 1)
+09.09 18:00:06 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
+09.09 18:00:07 | ХАТО 71890079 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was blocked by the user"}
+09.09 18:00:07 | хабар: 1/3 манзилга етди
