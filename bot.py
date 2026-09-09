@@ -79,35 +79,27 @@ SLOTS=sorted({l["t"] for l in LESSONS},key=lambda x:(int(x.split(":")[0]),int(x.
 TOKEN=os.environ.get("TELEGRAM_TOKEN","").strip()
 CHAT=os.environ.get("TELEGRAM_CHAT_ID","").strip()
 
-def send(text):
-    if not TOKEN or not CHAT:
-        print("!! TELEGRAM_TOKEN ёки TELEGRAM_CHAT_ID берилмаган"); sys.exit(1)
-    ids=[c.strip() for c in CHAT.replace(";",",").split(",") if c.strip()]
-    ok=True
-    for cid in ids:
-        body=urllib.parse.urlencode({"chat_id":cid,"text":text,"parse_mode":"HTML",
-            "disable_web_page_preview":"true"}).encode()
-        sent=False
-        for i in range(3):
-            try:
-                req=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=body)
-                with urllib.request.urlopen(req,timeout=30) as r: print("OK",r.status); sent=True; break
-            except Exception as e:
-                print("хато (%d): %s"%(i+1,e)); time.sleep(3)
-        if not sent: ok=False
-    return ok
-
-def block(l):
-    s=["<b>%s</b> · %s · <i>%s</i>"%(l["code"],l["ty"],l["pot"]),
-       "   📖 <b>%d-мавзу.</b> %s"%(l["tno"],l["top"])]
-    if l.get("on"): s.append("   ❗️ <b>%s</b>"%l["on"])
-    s+=["   👤 %s — %s, <b>%s</b>-хона"%(g,a,b) for g,a,b in l["who"]]
-    return "\n".join(s)
-
 STATE=".state/sent.txt"
+LOGF=".state/log.txt"
+OBUNA=".state/obuna.txt"
+
+def logga(s):
+    t=dt.datetime.now(TZ).strftime("%d.%m %H:%M:%S")
+    line="%s | %s"%(t,s)
+    print(line)
+    try:
+        os.makedirs(".state",exist_ok=True)
+        old=[]
+        try: old=[x for x in open(LOGF,encoding="utf-8").read().split("\n") if x.strip()]
+        except Exception: pass
+        old.append(line)
+        open(LOGF,"w",encoding="utf-8").write("\n".join(old[-250:])+"\n")
+    except Exception as e: print("лог хатоси:",e)
+
 def already(key):
     try: return key in open(STATE,encoding="utf-8").read().split("\n")
     except Exception: return False
+
 def mark(key):
     os.makedirs(".state",exist_ok=True)
     old=[]
@@ -116,12 +108,86 @@ def mark(key):
     old.append(key)
     open(STATE,"w",encoding="utf-8").write("\n".join(old[-300:])+"\n")
 
+# ---------- обуна ----------
+def obunalar():
+    try: return [x.strip() for x in open(OBUNA,encoding="utf-8").read().split("\n") if x.strip()]
+    except Exception: return []
+
+def obuna_yoz(lst):
+    os.makedirs(".state",exist_ok=True)
+    open(OBUNA,"w",encoding="utf-8").write("\n".join(lst)+("\n" if lst else ""))
+
+def obuna_qosh(cid):
+    cid=str(cid); l=obunalar()
+    if cid in l: return False
+    l.append(cid); obuna_yoz(l); logga("янги обуна: %s (жами %d)"%(cid,len(l))); return True
+
+def obuna_ol(cid):
+    cid=str(cid); l=obunalar()
+    if cid not in l: return False
+    l=[x for x in l if x!=cid]; obuna_yoz(l); logga("обуна бекор: %s (жами %d)"%(cid,len(l))); return True
+
+def obunami(cid):
+    return str(cid) in obunalar()
+
+def barcha_manzil():
+    ids=[c.strip() for c in CHAT.replace(";",",").split(",") if c.strip()]
+    for c in obunalar():
+        if c not in ids: ids.append(c)
+    return ids
+
+# ---------- юбориш ----------
+def bitta(cid,text,plain=False):
+    """бир чатга юбориш; True = муваффақият"""
+    import urllib.error,re as _re
+    p={"chat_id":cid,"text":(_re.sub(r"<[^>]+>","",text) if plain else text),
+       "disable_web_page_preview":"true"}
+    if not plain: p["parse_mode"]="HTML"
+    body=urllib.parse.urlencode(p).encode()
+    for i in range(3):
+        try:
+            req=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=body)
+            with urllib.request.urlopen(req,timeout=30) as r: return True
+        except urllib.error.HTTPError as e:
+            d=""
+            try: d=e.read().decode("utf-8","replace")[:200]
+            except Exception: pass
+            logga("ХАТО %s (%d): %s %s"%(cid,i+1,e.code,d))
+            if e.code==400 and not plain: return bitta(cid,text,plain=True)
+            if e.code==429: time.sleep(20); continue
+            if e.code in (401,403,404):
+                if e.code in (403,400): obuna_ol(cid)
+                return False
+            time.sleep(3)
+        except Exception as e:
+            logga("ХАТО %s (%d): %s"%(cid,i+1,e)); time.sleep(3)
+    if not plain: return bitta(cid,text,plain=True)
+    return False
+
+def send(text):
+    if not TOKEN or not CHAT:
+        print("!! TELEGRAM_TOKEN ёки TELEGRAM_CHAT_ID берилмаган"); sys.exit(1)
+    ids=barcha_manzil()
+    ok=0
+    for cid in ids:
+        if bitta(cid,text): ok+=1
+        time.sleep(0.06)
+    logga("хабар: %d/%d манзилга етди"%(ok,len(ids)))
+    return ok>0
+
+def block(l):
+    s=["<b>%s</b> · %s · <i>%s</i>"%(l["code"],l["ty"],l["pot"]),
+       "   📖 <b>%d-мавзу.</b> %s"%(l["tno"],l["top"])]
+    if l.get("on"): s.append("   ❗️ <b>%s</b>"%l["on"])
+    s+=["   👤 %s — %s, <b>%s</b>-хона"%(g,a,b) for g,a,b in l["who"]]
+    return "\n".join(s)
+
 def digest():
     day=dt.datetime.now(TZ).date()+dt.timedelta(days=1)
     key="digest-%s"%day
-    if already(key): print("бу кунги дайджест аллақачон юборилган"); return
+    if already(key): return
     ls=[l for l in LESSONS if l["d"]==day]
-    if not ls: print("эртага дарс йўқ"); mark(key); return
+    if not ls: logga("эртага дарс йўқ"); mark(key); return
     p=["📅 <b>Эртага — %s, %s</b>\nДавлат-ҳуқуқий фанлар кафедраси машғулотлари\n"
        %(day.strftime("%d.%m.%Y"),KUN[day.weekday()])]
     for t in SLOTS:
@@ -129,26 +195,31 @@ def digest():
         if not cur: continue
         p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
     p.append("<i>Ҳаммага сермаҳсул иш куни тилаймиз!</i>")
-    send("\n".join(p).strip()); mark(key)
+    if send("\n".join(p).strip()): mark(key)
+    else: logga("дайджест юборилмади, қайта уриниб кўрилади")
 
 def remind(slot):
     now=dt.datetime.now(TZ); today=now.date()
     key="remind-%s-%s"%(today,slot)
-    if already(key): print("бу эслатма аллақачон юборилган"); return
+    if already(key): return
     ls=[l for l in LESSONS if l["d"]==today and l["t"]==slot]
-    if not ls: print("бугун %s да дарс йўқ"%slot); mark(key); return
+    if not ls: logga("бугун %s да дарс йўқ"%slot); mark(key); return
     hh,mm=(int(x) for x in slot.split(":"))
     start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
-    qoldi=int((start-now).total_seconds()//60)
-    if qoldi<1: print("дарс бошланиб бўлган, эслатма юборилмади"); mark(key); return
+    qoldi=int(round((start-now).total_seconds()/60.0))
+    if qoldi<1: logga("%s: дарс бошланиб бўлган"%slot); mark(key); return
+    logga("эслатма: %s (%d дақиқа қолди, %d дарс)"%(slot,qoldi,len(ls)))
+    ok=True
     for l in ls:
-        send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,slot,block(l))); time.sleep(1)
-    mark(key)
+        if not send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,slot,block(l))): ok=False
+        time.sleep(1)
+    if ok: mark(key)
+    else: logga("эслатма ЮБОРИЛМАДИ: %s — қайта уринилади"%slot)
 
 def test():
     n=dt.datetime.now(TZ)
-    send("✅ <b>Синов хабари</b>\nБот ишламоқда. Ҳозирги вақт: %s\nЖадвалдаги машғулотлар: %d"
-         %(n.strftime("%d.%m.%Y %H:%M"),len(LESSONS)))
+    send("✅ <b>Синов хабари</b>\nБот ишламоқда. Ҳозирги вақт: %s\nЖадвалдаги машғулотлар: %d\nОбуначилар: %d"
+         %(n.strftime("%d.%m.%Y %H:%M"),len(LESSONS),len(obunalar())))
 
 def diag():
     import urllib.error
@@ -157,23 +228,29 @@ def diag():
         try: print(name,"->",urllib.request.urlopen(u,timeout=20).read().decode("utf-8","replace")[:600])
         except urllib.error.HTTPError as e: print(name,"-> ХАТО",e.code,e.read().decode("utf-8","replace")[:600])
         except Exception as e: print(name,"-> ХАТО",type(e).__name__,e)
-    print("TOKEN len:",len(TOKEN or ""),"| bot_id:",(TOKEN or "").split(":")[0])
-    print("CHAT:",repr(CHAT))
+    print("TOKEN len:",len(TOKEN or ""),"| CHAT:",repr(CHAT),"| обуна:",obunalar())
     call("getMe")
-    call("getChat","?chat_id="+urllib.parse.quote(CHAT or ""))
-    b=urllib.parse.urlencode({"chat_id":CHAT,"text":"диагностика"}).encode()
-    try:
-        rq=urllib.request.Request("https://api.telegram.org/bot%s/sendMessage"%TOKEN,data=b)
-        print("sendMessage ->",urllib.request.urlopen(rq,timeout=20).read().decode("utf-8","replace")[:600])
-    except urllib.error.HTTPError as e: print("sendMessage -> ХАТО",e.code,e.read().decode("utf-8","replace")[:600])
-    except Exception as e: print("sendMessage -> ХАТО",type(e).__name__,e)
-    print("--- getUpdates ---")
-    call("getUpdates","?limit=20")
+    for cid in barcha_manzil(): call("getChat","?chat_id="+urllib.parse.quote(cid))
+    send("🔎 Диагностика хабари")
+    call("getUpdates","?limit=5")
 
-KB={"keyboard":[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],[{"text":"🗓 Шу ҳафта"}]],
-    "resize_keyboard":True}
-HELLO=("👋 <b>ДҲФ кафедраси — дарс жадвали боти</b>\n"
+# ---------- интерфейс ----------
+YOQ="🔔 Эслатмани ёқиш"
+OCH="🔕 Эслатмани ўчириш"
+
+def kb(cid):
+    uch=[{"text":OCH}] if obunami(cid) else [{"text":YOQ}]
+    return {"keyboard":[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],
+                        [{"text":"🗓 Шу ҳафта"}],uch],"resize_keyboard":True}
+
+def hello(cid):
+    h=("👋 <b>ДҲФ кафедраси — дарс жадвали боти</b>\n"
        "Пастдаги тугмалардан фойдаланинг ёки /bugun, /ertaga, /hafta ёзинг.\n")
+    if obunami(cid):
+        h+="🔔 Автоматик эслатма: <b>ЁҚИЛГАН</b> (ҳар дарсдан 10 дақиқа олдин ва кечқурун 18:00 да).\n"
+    else:
+        h+="🔕 Автоматик эслатма ўчиқ. Ёқиш учун «%s» тугмасини босинг.\n"%YOQ
+    return h
 
 def api(name,params,timeout=70):
     d=urllib.parse.urlencode(params).encode()
@@ -192,9 +269,9 @@ def chunks(s,n=3500):
     return out
 
 def reply(cid,text):
-    for i,part in enumerate(chunks(text)):
+    for part in chunks(text):
         api("sendMessage",{"chat_id":cid,"text":part,"parse_mode":"HTML",
-            "disable_web_page_preview":"true","reply_markup":json.dumps(KB)})
+            "disable_web_page_preview":"true","reply_markup":json.dumps(kb(cid))})
         time.sleep(0.3)
 
 def day_text(day,title):
@@ -216,32 +293,6 @@ def week_text(today):
         out.append(day_text(d,KUN[d.weekday()].capitalize()))
     return "\n\n".join(out)
 
-def javob(daqiqa=25):
-    if not TOKEN: print("!! TELEGRAM_TOKEN йўқ"); sys.exit(1)
-    end=time.time()+daqiqa*60; off=0
-    r=api("getUpdates",{"timeout":0,"offset":-1},timeout=30)
-    if r.get("result"): off=r["result"][-1]["update_id"]+1
-    print("тинглаш бошланди, offset=%d"%off)
-    while time.time()<end:
-        r=api("getUpdates",{"timeout":50,"offset":off})
-        for u in r.get("result",[]):
-            off=u["update_id"]+1
-            m=u.get("message") or u.get("edited_message") or {}
-            cid=(m.get("chat") or {}).get("id"); txt=m.get("text") or ""
-            if cid is None or not txt: continue
-            cid=str(cid); low=txt.lower(); today=dt.datetime.now(TZ).date()
-            if "эртага" in low or low.startswith("/ertaga"):
-                reply(cid,day_text(today+dt.timedelta(days=1),"Эртага"))
-            elif "ҳафта" in low or low.startswith("/hafta"):
-                reply(cid,week_text(today))
-            elif "бугун" in low or low.startswith("/bugun"):
-                reply(cid,day_text(today,"Бугун"))
-            else:
-                reply(cid,HELLO+"\n"+day_text(today,"Бугун")+"\n\n"
-                      +day_text(today+dt.timedelta(days=1),"Эртага"))
-            print("жавоб юборилди")
-    print("тинглаш тугади")
-
 def saqla():
     if not os.environ.get("GITHUB_ACTIONS"): return
     os.system('git config user.name "dhf-bot"; '
@@ -251,52 +302,63 @@ def saqla():
 
 def vazifa():
     now=dt.datetime.now(TZ); today=now.date()
-    if now.hour==18:
-        if not already("digest-%s"%(today+dt.timedelta(days=1))):
-            digest(); saqla()
+    if now.hour==18 and not already("digest-%s"%(today+dt.timedelta(days=1))):
+        digest(); saqla()
     if today.weekday()<5:
         for slot in SLOTS:
             hh,mm=(int(x) for x in slot.split(":"))
             start=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
             d=(start-now).total_seconds()
-            if 0<d<=660 and not already("remind-%s-%s"%(today,slot)):
+            if 0<d<=630 and not already("remind-%s-%s"%(today,slot)):
                 remind(slot); saqla()
+
+def xabarni_qayta_ishla(cid,txt):
+    cid=str(cid); low=txt.lower(); today=dt.datetime.now(TZ).date()
+    if YOQ.lower() in low or low.startswith("/obuna") or low.startswith("/yoq"):
+        yangi=obuna_qosh(cid); saqla()
+        reply(cid,("🔔 <b>Эслатма ёқилди.</b>\nЭнди ҳар дарсдан <b>10 дақиқа олдин</b> ва кечқурун "
+                   "<b>18:00</b> да эртанги жадвал шу ерга келиб туради.\n"
+                   "Ўчириш учун «%s» тугмасини босинг."%OCH) if yangi else
+                  "🔔 Эслатма аллақачон ёқилган.")
+        return
+    if OCH.lower() in low or low.startswith("/toxtat") or low.startswith("/stop"):
+        obuna_ol(cid); saqla()
+        reply(cid,"🔕 <b>Эслатма ўчирилди.</b>\nҚайта ёқиш учун «%s» тугмасини босинг."%YOQ); return
+    if "эртага" in low or low.startswith("/ertaga"):
+        reply(cid,day_text(today+dt.timedelta(days=1),"Эртага")); return
+    if "ҳафта" in low or low.startswith("/hafta"):
+        reply(cid,week_text(today)); return
+    if "бугун" in low or low.startswith("/bugun"):
+        reply(cid,day_text(today,"Бугун")); return
+    reply(cid,hello(cid)+"\n"+day_text(today,"Бугун")+"\n\n"
+          +day_text(today+dt.timedelta(days=1),"Эртага"))
 
 def loop(daqiqa=330):
     if not TOKEN: print("!! TELEGRAM_TOKEN йўқ"); sys.exit(1)
     end=time.time()+daqiqa*60; off=0
     r=api("getUpdates",{"timeout":0,"offset":-1},timeout=30)
     if r.get("result"): off=r["result"][-1]["update_id"]+1
-    print("цикл бошланди, offset=%d, %d дақиқа"%(off,daqiqa))
+    logga("цикл бошланди (%d дақиқа, обуна: %d)"%(daqiqa,len(obunalar()))); saqla()
     while time.time()<end:
         try: vazifa()
-        except Exception as e: print("вазифа хатоси:",e)
+        except Exception as e: logga("вазифа хатоси: %s"%e)
         r=api("getUpdates",{"timeout":30,"offset":off})
         for u in r.get("result",[]):
             off=u["update_id"]+1
             m=u.get("message") or u.get("edited_message") or {}
             cid=(m.get("chat") or {}).get("id"); txt=m.get("text") or ""
             if cid is None or not txt: continue
-            cid=str(cid); low=txt.lower(); today=dt.datetime.now(TZ).date()
-            if "эртага" in low or low.startswith("/ertaga"):
-                reply(cid,day_text(today+dt.timedelta(days=1),"Эртага"))
-            elif "ҳафта" in low or low.startswith("/hafta"):
-                reply(cid,week_text(today))
-            elif "бугун" in low or low.startswith("/bugun"):
-                reply(cid,day_text(today,"Бугун"))
-            else:
-                reply(cid,HELLO+"\n"+day_text(today,"Бугун")+"\n\n"
-                      +day_text(today+dt.timedelta(days=1),"Эртага"))
-            print("жавоб юборилди")
+            try: xabarni_qayta_ishla(cid,txt)
+            except Exception as e: logga("жавоб хатоси: %s"%e)
     try: vazifa()
-    except Exception as e: print("вазифа хатоси:",e)
-    print("цикл тугади")
+    except Exception as e: logga("вазифа хатоси: %s"%e)
+    logga("цикл тугади")
 
 if __name__=="__main__":
     c=sys.argv[1] if len(sys.argv)>1 else "test"
     if c=="digest": digest()
     elif c=="remind": remind(sys.argv[2])
     elif c=="diag": diag()
-    elif c=="javob": javob(int(sys.argv[2]) if len(sys.argv)>2 else 25)
+    elif c=="javob": loop(int(sys.argv[2]) if len(sys.argv)>2 else 25)
     elif c=="loop": loop(int(sys.argv[2]) if len(sys.argv)>2 else 330)
     else: test()
