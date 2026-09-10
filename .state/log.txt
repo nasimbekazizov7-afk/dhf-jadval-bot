@@ -26,3 +26,6 @@
 10.09 10:19:39 | хабар: 1/2 манзилга етди
 10.09 10:19:40 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
 10.09 10:19:41 | хабар: 1/2 манзилга етди
+10.09 11:49:42 | эслатма: 12:00 (10 дақиқа қолди, 1 дарс)
+10.09 11:49:42 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
+10.09 11:49:43 | хабар: 1/2 манзилга етди
