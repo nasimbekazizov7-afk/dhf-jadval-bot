@@ -1,6 +1,6 @@
 """ДҲФ кафедраси — Telegram эслатма боти (мустақил файл, жадвал ичида).
    python bot.py digest | remind 9:00 | test"""
-import os,sys,time,json,urllib.request,urllib.parse,datetime as dt
+import os,sys,time,json,re,urllib.request,urllib.parse,datetime as dt
 try:
     from zoneinfo import ZoneInfo
     TZ=ZoneInfo("Asia/Tashkent")
@@ -9,46 +9,50 @@ except Exception:
 START=dt.date(2026,9,8); END=dt.date(2026,12,25)
 HOL={dt.date(2026,10,1),dt.date(2026,12,8)}
 KUN=["душанба","сешанба","чоршанба","пайшанба","жума","шанба","якшанба"]
-SUBFULL={"КОНС":"Конституциявий ҳуқуқ","ДҲН":"Давлат ва ҳуқуқ назарияси"}
+SUBD={"ДҲН":"ДҲН","КОНС":"КОНС","МАЪМ":"Маъмурий ҳуқуқ","АДМ":"Административное право",
+      "МЕҲН":"Меҳнат ҳуқуқи","ТРУД":"Трудовое право"}
+SUBFULL={"КОНС":"Конституциявий ҳуқуқ","ДҲН":"Давлат ва ҳуқуқ назарияси",
+         "МАЪМ":"Маъмурий ҳуқуқ","АДМ":"Административное право",
+         "МЕҲН":"Меҳнат ҳуқуқи","ТРУД":"Трудовое право"}
 DHN7_UZ=["Davlat va huquq nazariyasining predmeti va metodlari. Davlat va huquqning kelib chiqishi.","Davlat tushunchasi, belgilari, mohiyati va tiplari. Davlat funksiyalari.","Davlat shakllari: davlatning boshqaruv shakli, tuzilish shakli va siyosiy rejim. Davlat mexanizmi va davlat apparati.","Ijtimoiy munosabatlar va huquq. Huquqiy ong va huquqiy madaniyat. Huquq normalari. Huquq shakllari (manbalari).","Huquq ijodkorligi. Huquq tizimi va huquqiy tizim. Huquqiy munosabatlar. Huquqni amalga oshirish.","Huquq normalarini sharhlash. Huquqiy xulq-atvor. Huquqbuzarlik va yuridik javobgarlik.","Huquqiy tartibga solish mexanizmi. Qonuniylik va huquqiy tartibot. Davlat va huquqning rivojlanish istiqbollari va yo‘llari."]
 DHN7_RU=["Предмет и методы теории государства и права. Происхождение государства и права.","Понятие, признаки, сущность и типы государства. Функции государства.","Формы государства: форма правления, форма государственного устройства и политический режим. Механизм государства и государственный аппарат.","Общественные отношения и право. Правосознание и правовая культура. Нормы права. Формы (источники) права.","Правотворчество. Система права и правовая система. Правовые отношения. Реализация права.","Толкование норм права. Правовое поведение. Правонарушение и юридическая ответственность.","Механизм правового регулирования. Законность и правопорядок. Перспективы и пути развития государства и права."]
 DHN15_UZ=["Davlat va huquq nazariyasining predmeti va metodlari","Davlat va huquqning kelib chiqishi","Davlat tushunchasi, belgilari, mohiyati va tiplari. Davlat funksiyalari","Davlat shakllari: davlatning boshqaruv shakli, tuzilish shakli va siyosiy rejim","Davlat mexanizmi va davlat apparati","Ijtimoiy munosabatlar va huquq. Huquqiy ong va huquqiy madaniyat","Huquq normalari","Huquq shakllari (manbalari)","Huquq ijodkorligi","Huquq tizimi va huquqiy tizim","Huquqiy munosabatlar. Huquqni amalga oshirish","Huquq normalarini sharhlash","Huquqiy xulq-atvor. Huquqbuzarlik va yuridik javobgarlik","Huquqiy tartibga solish mexanizmi. Qonuniylik va huquqiy tartibot","Davlat va huquqning rivojlanish istiqbollari va yo‘llari"]
 DHN15_RU=["Предмет и методы теории государства и права","Происхождение государства и права","Понятие, признаки, сущность и типы государства. Функции государства","Формы государства: форма правления, форма государственного устройства и политический режим","Механизм государства и государственный аппарат","Общественные отношения и право. Правосознание и правовая культура","Нормы права","Формы (источники) права","Правотворчество","Система права и правовая система","Правовые отношения. Реализация права","Толкование норм права","Правовое поведение. Правонарушение и юридическая ответственность","Механизм правового регулирования. Законность и правопорядок","Перспективы и пути развития государства и права"]
 KONS15_UZ=["Konstitutsiyaviy huquq faniga kirish. Konstitutsiyaning asosiy prinsiplari","O‘zbekiston Respublikasida fuqarolik masalalari. Shaxsiy huquq va erkinliklar","Inson va fuqarolarning siyosiy, iqtisodiy, ijtimoiy, madaniy va ekologik huquqlari. Fuqarolarning burchlari","Jamiyatning iqtisodiy negizlari. Fuqarolik jamiyati institutlari","Oila, bolalar va yoshlar masalalari. Ommaviy axborot vositalarining konstitutsiyaviy asoslari","O‘zbekiston Respublikasining ma’muriy-hududiy va davlat tuzilishi","O‘zbekiston Respublikasining Oliy Majlisi","O‘zbekiston Respublikasida Prezidentlik instituti","O‘zbekiston Respublikasi Vazirlar Mahkamasi","Mahalliy davlat hokimiyati va fuqarolarning o‘zini o‘zi boshqarish organlari","O‘zbekiston Respublikasida saylov tizimi","Sud hokimiyatining konstitutsiyaviy-huquqiy asoslari","O‘zbekiston Respublikasida advokaturaning konstitutsiyaviy-huquqiy asoslari","Prokuraturaning konstitutsiyaviy-huquqiy asoslari","Moliya, pul va bank tizimi hamda mudofaa va xavfsizlik masalalari. Konstitutsiyaga o‘zgartirish kiritish tartibi"]
 KONS15_RU=["Введение в конституционное право. Основные принципы Конституции","Вопросы гражданства в Республике Узбекистан. Личные права и свободы","Политические, экономические, социальные, культурные и экологические права человека и гражданина. Обязанности граждан","Экономические основы общества. Институты гражданского общества","Вопросы семьи, детей и молодёжи. Конституционные основы средств массовой информации","Административно-территориальное и государственное устройство Республики Узбекистан","Олий Мажлис Республики Узбекистан","Институт президентства в Республике Узбекистан","Кабинет Министров Республики Узбекистан","Местные органы государственной власти и органы самоуправления граждан","Избирательная система в Республике Узбекистан","Конституционно-правовые основы судебной власти","Конституционно-правовые основы адвокатуры в Республике Узбекистан","Конституционно-правовые основы прокуратуры","Вопросы финансов, денежной и банковской системы, обороны и безопасности. Порядок внесения изменений в Конституцию"]
-CFG=[{"pot": "1К","sub": "ДҲН","pn": "Киберҳуқуқ","lect": "У.Шоназаров","lroom": "А-306","sems": [["У.Шоназаров","306","БК-26"]],"slots": [[0,"9:00"],[2,"10:30"]],"ru": False},{"pot": "1К","sub": "КОНС","pn": "Киберҳуқуқ","lect": "Н.Азизов","lroom": "А-306","sems": [["Н.Азизов","306","БК-26"]],"slots": [[1,"10:30"],[3,"10:30"]],"ru": False},{"pot": "1КРУС","sub": "ДҲН","pn": "Киберҳуқуқ (рус гуруҳи)","lect": "А.Джасимова","lroom": "А-305","sems": [["А.Джасимова","305","БКР-26"]],"slots": [[2,"9:00"],[3,"9:00"]],"ru": True},{"pot": "1КРУС","sub": "КОНС","pn": "Киберҳуқуқ (рус гуруҳи)","lect": "А.Джасимова","lroom": "А-305","sems": [["А.Джасимова","305","БКР-26"]],"slots": [[1,"12:00"],[3,"10:30"]],"ru": True},{"pot": "1П","sub": "ДҲН","pn": "Прокурорлик фаолияти","lect": "У.Шоназаров","lroom": "Б-103","sems": [["У.Шоназаров","103","БП1-26"],["Ш.Зуфарова","307","БП2-26"]],"slots": [[1,"9:00"],[3,"9:00"]],"ru": False},{"pot": "1П","sub": "КОНС","pn": "Прокурорлик фаолияти","lect": "Н.Азизов","lroom": "Б-103","sems": [["Д.Ибрагимов","103","БП1-26"],["Ш.Зуфарова","307","БП2-26"]],"slots": [[2,"10:30"],[4,"10:30"]],"ru": False},{"pot": "1ПРУС","sub": "ДҲН","pn": "Прокурорлик фаолияти (рус гуруҳи)","lect": "Т.Кенжаев","lroom": "А-404","sems": [["Т.Кенжаев","404","БПР-26"]],"slots": [[2,"9:00"],[4,"9:00"]],"ru": True},{"pot": "1ПРУС","sub": "КОНС","pn": "Прокурорлик фаолияти (рус гуруҳи)","lect": "Т.Кенжаев","lroom": "А-404","sems": [["Т.Кенжаев","404","БПР-26"]],"slots": [[0,"10:30"],[2,"10:30"]],"ru": True},{"pot": "1ТА","sub": "ДҲН","pn": "Тергов фаолияти «А» поток","lect": "У.Шоназаров","lroom": "А-101","sems": [["Н.Азизов","207","БТА1-26"],["Ш.Зуфарова","208","БТА2-26"],["А.Джасимова","210","БТА3-26"]],"slots": [[0,"10:30"]],"ru": False},{"pot": "1ТА","sub": "КОНС","pn": "Тергов фаолияти «А» поток","lect": "Д.Ибрагимов","lroom": "А-101","sems": [["А.Джасимова","207","БТА1-26"],["Э.Хожиев","208","БТА2-26"],["Ш.Зуфарова","210","БТА3-26"]],"slots": [[0,"9:00"],[2,"12:00"]],"ru": False},{"pot": "1ТБ","sub": "ДҲН","pn": "Тергов фаолияти «Б» поток","lect": "У.Шоназаров","lroom": "А-201","sems": [["У.Шоназаров","201","БТБ1-26"],["Ш.Зуфарова","202","БТБ2-26"],["А.Джасимова","205","БТБ3-26"]],"slots": [[0,"12:00"]],"ru": False},{"pot": "1ТБ","sub": "КОНС","pn": "Тергов фаолияти «Б» поток","lect": "Д.Ибрагимов","lroom": "А-201","sems": [["О.Нематиллаев","201","БТБ1-26"],["Э.Хожиев","202","БТБ2-26"],["Ш.Зуфарова","205","БТБ3-26"]],"slots": [[1,"10:30"],[3,"10:30"]],"ru": False},{"pot": "1ТД","sub": "ДҲН","pn": "Тергов фаолияти «Д» поток","lect": "У.Шоназаров","lroom": "Б-201","sems": [["У.Шоназаров","201","БТД1-26"],["Ш.Зуфарова","206","БТД2-26"]],"slots": [[3,"12:00"]],"ru": False},{"pot": "1ТД","sub": "КОНС","pn": "Тергов фаолияти «Д» поток","lect": "Д.Ибрагимов","lroom": "Б-201","sems": [["Д.Ибрагимов","201","БТД1-26"],["Ш.Зуфарова","206","БТД2-26"]],"slots": [[2,"9:00"],[4,"9:00"]],"ru": False},{"pot": "1ТРУС","sub": "ДҲН","pn": "Тергов фаолияти (рус гуруҳи)","lect": "Т.Кенжаев","lroom": "А-309","sems": [["Т.Кенжаев","309","БТР-26"]],"slots": [[1,"9:00"]],"ru": True},{"pot": "1ТРУС","sub": "КОНС","pn": "Тергов фаолияти (рус гуруҳи)","lect": "Т.Кенжаев","lroom": "А-309","sems": [["Т.Кенжаев","309","БТР-26"]],"slots": [[0,"9:00"],[3,"9:00"]],"ru": True}]
-def dates(wds,n):
-    out=[];d=START
-    while len(out)<n and d<END+dt.timedelta(days=400):
+MAM_UZ=["Davlat boshqaruvini ma’muriy-huquqiy tartibga solish tushunchasi va xususiyatlari. Ma’muriy huquq tushunchasi va predmeti", "Ma’muriy huquq subyektlari tushunchasi, turlari va ularning huquqiy maqomi", "Davlat xizmati", "Davlat boshqaruvini ma’muriy-huquqiy tartibga solish shakllari va uslublari", "Ma’muriy protsess. Ma’muriy tartib taomillar", "Iqtisodiyot va ijtimoiy sohalarni boshqarish", "Ma’muriy-siyosiy va tarmoqlararo boshqaruv"]
+ADM_RU=["Понятие и особенности административно-правового регулирования государственного управления. Понятие и предмет административного права.", "Понятие, виды и правовой статус субъектов административного права.", "Государственная служба.", "Формы и методы административно-правового регулирования государственного управления.", "Административный процесс. Административные процедуры.", "Управление экономикой и социальными сферами.", "Административно-политическое и межотраслевое управление."]
+MEH_UZ=["Mehnat huquqiga kirish. Mehnatga oid munosabatlarning yuzaga kelish asoslari. Mehnat sohasidagi ijtimoiy sheriklik", "Ishga joylashtirish. Mehnat shartnomasi. Mehnat shartnomasini o‘zgartirish, bekor qilish asoslari. Xodimni ishdan chetlashtirish", "Ish vaqti. Dam olish vaqti, ta’tillar to‘g‘risidagi umumiy qoidalar", "Mehnatga haq to‘lash. Mehnatni normalashtirish. Kafolatli to‘lovlar va kompensatsiya to‘lovlari", "Mehnat intizomi. Mehnat shartnomasi taraflarining moddiy javobgarligi. Mehnatni muhofaza qilish. Xodimlarni kasbga tayyorlash, qayta tayyorlash va ularning malakasini oshirish", "Ayrim toifadagi xodimlar mehnatini huquqiy jihatdan tartibga solishning o‘ziga xos xususiyatlari", "Xodimlarning mehnat huquqlarini himoya qilish. Mehnat nizolarini ko‘rib chiqish"]
+TRU_RU=["Введение в трудовое право. Основы возникновения трудовых отношений. Социальное партнерство в сфере труда.", "Трудоустройство. Трудовой договор. Основания изменения, прекращения трудового договора. Отстранение работника от работы.", "Рабочее время. Время отдыха, общие положения об отпусках.", "Оплата труда. Нормирование труда. Гарантийные и компенсационные выплаты.", "Трудовая дисциплина. Материальная ответственность сторон трудового договора. Охрана труда. Профессиональная подготовка, переподготовка и повышение квалификации работников.", "Особенности правового регулирования труда отдельных категорий работников.", "Защита трудовых прав работников. Рассмотрение трудовых споров."]
+CFG=[{"sub": "ДҲН", "pot": "1ТА", "pn": "Тергов фаолияти «А» поток", "lect": "У.Шоназаров", "lroom": "А-101", "sems": [["О.Нематиллаев", "207", "БТА1-26"], ["У.Шоназаров", "208", "БТА2-26"], ["Ш.Зуфарова", "210", "БТА3-26"]], "slots": [[0, "10:30"]], "ru": False, "top": "DHN7", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1ТБ", "pn": "Тергов фаолияти «Б» поток", "lect": "У.Шоназаров", "lroom": "А-201", "sems": [["У.Шоназаров", "201", "БТБ1-26"], ["Ш.Зуфарова", "202", "БТБ2-26"], ["Н.Азизов", "205", "БТБ3-26"]], "slots": [[0, "12:00"]], "ru": False, "top": "DHN7", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1ТД", "pn": "Тергов фаолияти «Д» поток", "lect": "У.Шоназаров", "lroom": "Б-201", "sems": [["А.Джасимова", "202", "БТД1-26"], ["Ш.Зуфарова", "206", "БТД2-26"]], "slots": [[3, "12:00"]], "ru": False, "top": "DHN7", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1П", "pn": "Прокурорлик фаолияти", "lect": "У.Шоназаров", "lroom": "Б-103", "sems": [["У.Шоназаров", "103", "БП1-26"], ["Д.Ибрагимов", "307", "БП2-26"]], "slots": [[1, "9:00"], [3, "9:00"]], "ru": False, "top": "DHN15_7", "lec": [2, 2, 2, 2, 2, 3, 2], "sem": [2, 2, 2, 2, 2, 3, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1К", "pn": "Киберҳуқуқ", "lect": "У.Шоназаров", "lroom": "А-306", "sems": [["У.Шоназаров", "306", "БК-26"]], "slots": [[0, "9:00"], [2, "10:30"]], "ru": False, "top": "DHN15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1ТА", "pn": "Тергов фаолияти «А» поток", "lect": "Д.Ибрагимов", "lroom": "А-101", "sems": [["Н.Азизов", "207", "БТА1-26"], ["Э.Хожиев", "208", "БТА2-26"], ["Ш.Зуфарова", "210", "БТА3-26"]], "slots": [[0, "9:00"], [2, "12:00"]], "ru": False, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1ТБ", "pn": "Тергов фаолияти «Б» поток", "lect": "Д.Ибрагимов", "lroom": "А-201", "sems": [["Д.Ибрагимов", "201", "БТБ1-26"], ["Э.Хожиев", "202", "БТБ2-26"], ["О.Нематиллаев", "205", "БТБ3-26"]], "slots": [[1, "10:30"], [3, "10:30"]], "ru": False, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1ТД", "pn": "Тергов фаолияти «Д» поток", "lect": "Д.Ибрагимов", "lroom": "Б-201", "sems": [["Н.Азизов", "202", "БТД1-26"], ["Э.Хожиев", "206", "БТД2-26"]], "slots": [[2, "9:00"], [4, "9:00"]], "ru": False, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1П", "pn": "Прокурорлик фаолияти", "lect": "Н.Азизов", "lroom": "Б-103", "sems": [["Д.Ибрагимов", "103", "БП1-26"], ["Э.Хожиев", "307", "БП2-26"]], "slots": [[2, "10:30"], [4, "10:30"]], "ru": False, "top": "KONS15_10", "lec": [2, 2, 2, 2, 1, 1, 2, 1, 1, 1], "sem": [2, 2, 2, 2, 1, 1, 2, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1К", "pn": "Киберҳуқуқ", "lect": "Н.Азизов", "lroom": "А-306", "sems": [["У.Шоназаров", "306", "БК-26"]], "slots": [[1, "10:30"], [3, "10:30"]], "ru": False, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1ТРУС", "pn": "Тергов фаолияти (рус гуруҳи)", "lect": "О.Нематиллаев", "lroom": "А-309", "sems": [["О.Нематиллаев", "309", "БТР-26"]], "slots": [[1, "9:00"]], "ru": True, "top": "DHN7", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1ПРУС", "pn": "Прокурорлик фаолияти (рус гуруҳи)", "lect": "А.Джасимова", "lroom": "А-404", "sems": [["А.Джасимова", "404", "БПР-26"]], "slots": [[2, "9:00"], [4, "9:00"]], "ru": True, "top": "DHN15_7", "lec": [2, 2, 2, 2, 2, 3, 2], "sem": [2, 2, 2, 2, 2, 3, 2], "start": "2026-09-08", "kurs": 1}, {"sub": "ДҲН", "pot": "1КРУС", "pn": "Киберҳуқуқ (рус гуруҳи)", "lect": "Ш.Зуфарова", "lroom": "А-305", "sems": [["Ш.Зуфарова", "305", "БКР-26"]], "slots": [[2, "9:00"], [3, "9:00"]], "ru": True, "top": "DHN15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1ТРУС", "pn": "Тергов фаолияти (рус гуруҳи)", "lect": "А.Джасимова", "lroom": "А-309", "sems": [["О.Нематиллаев", "309", "БТР-26"]], "slots": [[0, "9:00"], [3, "9:00"]], "ru": True, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1ПРУС", "pn": "Прокурорлик фаолияти (рус гуруҳи)", "lect": "А.Джасимова", "lroom": "А-404", "sems": [["А.Джасимова", "404", "БПР-26"]], "slots": [[0, "10:30"], [2, "10:30"]], "ru": True, "top": "KONS15_10", "lec": [2, 2, 2, 2, 1, 1, 2, 1, 1, 1], "sem": [2, 2, 2, 2, 1, 1, 2, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "КОНС", "pot": "1КРУС", "pn": "Киберҳуқуқ (рус гуруҳи)", "lect": "А.Джасимова", "lroom": "А-305", "sems": [["Ш.Зуфарова", "305", "БКР-26"]], "slots": [[1, "12:00"], [3, "10:30"]], "ru": True, "top": "KONS15", "lec": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "start": "2026-09-08", "kurs": 1}, {"sub": "МАЪМ", "pot": "2ТА", "pn": "Тергов фаолияти «А» поток", "lect": "Э.Хожиев", "lroom": "А-207", "sems": [["Д.Ибрагимов", "207", "БТА1-25"], ["Ш.Зуфарова", "208", "БТА2-25"], ["А.Джасимова", "210", "БТА3-25"]], "slots": [[3, "15:00"]], "ru": False, "top": "MAM", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 2, 1, 1], "start": "2026-09-14", "kurs": 2}, {"sub": "МАЪМ", "pot": "2ТБ", "pn": "Тергов фаолияти «Б» поток", "lect": "Э.Хожиев", "lroom": "А-201", "sems": [["Э.Хожиев", "201", "БТБ1-25"], ["А.Джасимова", "202", "БТБ2-25"], ["Ш.Зуфарова", "205", "БТБ3-25"]], "slots": [[1, "15:00"]], "ru": False, "top": "MAM", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 2, 1, 1], "start": "2026-09-14", "kurs": 2}, {"sub": "МАЪМ", "pot": "2П", "pn": "Прокурорлик фаолияти", "lect": "Э.Хожиев", "lroom": "Б-301", "sems": [["Э.Хожиев", "301", "БП1-25"], ["Ш.Зуфарова", "302", "БП2-25"]], "slots": [[0, "16:30"], [3, "13:30"]], "ru": False, "top": "MAM", "lec": [2, 2, 2, 2, 3, 2, 2], "sem": [2, 2, 2, 2, 3, 2, 2], "start": "2026-09-14", "kurs": 2}, {"sub": "АДМ", "pot": "2ТРУС", "pn": "Тергов фаолияти (рус гуруҳи)", "lect": "О.Нематиллаев", "lroom": "А-303", "sems": [["О.Нематиллаев", "303", "БТР-25"]], "slots": [[4, "16:30"]], "ru": True, "top": "ADM", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 2, 1, 1], "start": "2026-09-14", "kurs": 2}, {"sub": "АДМ", "pot": "2ПРУС", "pn": "Прокурорлик фаолияти (рус гуруҳи)", "lect": "О.Нематиллаев", "lroom": "А-202", "sems": [["О.Нематиллаев", "202", "БПР-25"]], "slots": [[1, "15:00"], [4, "15:00"]], "ru": True, "top": "ADM", "lec": [2, 2, 2, 2, 3, 2, 2], "sem": [2, 2, 2, 2, 3, 2, 2], "start": "2026-09-14", "kurs": 2}, {"sub": "МЕҲН", "pot": "3П", "pn": "Прокурорлик фаолияти", "lect": "Д.Ибрагимов", "lroom": "Б-103", "sems": [["Д.Ибрагимов", "103", "БП1-24"], ["Х.Қучқаров", "206", "БП2-24"]], "slots": [[0, "13:30"]], "ru": False, "top": "MEH", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 2, 1], "start": "2026-09-14", "kurs": 3}, {"sub": "ТРУД", "pot": "3ПРУС", "pn": "Прокурорлик фаолияти (рус гуруҳи)", "lect": "О.Нематиллаев", "lroom": "А-309", "sems": [["О.Нематиллаев", "309", "БПР-24"]], "slots": [[2, "15:00"]], "ru": True, "top": "TRU", "lec": [1, 1, 1, 1, 1, 1, 1], "sem": [1, 1, 1, 1, 1, 2, 1], "start": "2026-09-14", "kurs": 3}]
+def TOPS(c):
+    k=c["top"]; ru=c["ru"]
+    if k=="DHN7":     return DHN7_RU if ru else DHN7_UZ
+    if k=="DHN15":    return DHN15_RU if ru else DHN15_UZ
+    if k=="DHN15_7":  return (DHN15_RU if ru else DHN15_UZ)[:7]
+    if k=="KONS15":   return KONS15_RU if ru else KONS15_UZ
+    if k=="KONS15_10":return (KONS15_RU if ru else KONS15_UZ)[:10]
+    if k=="MAM":      return MAM_UZ
+    if k=="ADM":      return ADM_RU
+    if k=="MEH":      return MEH_UZ
+    return TRU_RU
+
+def dates(wds,n,start):
+    out=[];d=start
+    while len(out)<n and d<start+dt.timedelta(days=400):
         if d.weekday() in wds and d not in HOL: out.append(d)
         d+=dt.timedelta(days=1)
     return out
 
 def plan(c):
-    ru=c["ru"]; single=len(c["slots"])==1
-    if c["sub"]=="ДҲН":
-        if c["pot"].startswith("1Т"):
-            T=DHN7_RU if ru else DHN7_UZ; lec=[1]*7; sem=[1]*6+[2]
-        elif c["pot"].startswith("1П"):
-            T=(DHN15_RU if ru else DHN15_UZ)[:7]; lec=[2,2,2,2,2,3,2]; sem=list(lec)
-        else:
-            T=DHN15_RU if ru else DHN15_UZ; lec=[1]*15; sem=[1]*15
-    else:
-        if c["pot"].startswith("1П"):
-            T=(KONS15_RU if ru else KONS15_UZ)[:10]; lec=[2,2,2,2,1,1,2,1,1,1]; sem=list(lec)
-        else:
-            T=KONS15_RU if ru else KONS15_UZ; lec=[1]*15; sem=[1]*15
+    T=TOPS(c); lec=c["lec"]; sem=c["sem"]
+    y,m,dd=(int(x) for x in c["start"].split("-")); st=dt.date(y,m,dd)
     nl=sum(lec); ns=sum(sem); order=[]
-    if single:
-        seq=[]
-        for i in range(len(T)): seq+=[(i,"L")]*lec[i]+[(i,"S")]*sem[i]
-        ds=dates({c["slots"][0][0]},len(seq))
-        order=[(i,k,ds[j]) for j,(i,k) in enumerate(seq)]
-    else:
-        ds=dates({c["slots"][0][0],c["slots"][1][0]},nl+ns); j=0
-        for i in range(len(T)):
-            for _ in range(lec[i]): order.append((i,"L",ds[j])); j+=1
-            for _ in range(sem[i]): order.append((i,"S",ds[j])); j+=1
+    wds={s[0] for s in c["slots"]}
+    ds=dates(wds,nl+ns,st); j=0
+    for i in range(len(T)):
+        for _ in range(lec[i]): order.append((i,"L",ds[j])); j+=1
+        for _ in range(sem[i]): order.append((i,"S",ds[j])); j+=1
     return T,order,ns*2
 
 def build():
@@ -64,14 +68,18 @@ def build():
         st={w:t for w,t in c["slots"]}
         for i,kind,d in order:
             t=st.get(d.weekday()) or c["slots"][0][1]
-            r=dict(d=d,t=t,code=c["sub"]+c["pot"],pot=c["pn"],tno=i+1,top=T[i],
+            g0=c["sems"][0][2]
+            gk=re.sub(r"(\D)\d+-",r"\1-",g0)
+            pk=c["pot"].replace("ТРУС","Трус").replace("ПРУС","Прус").replace("КРУС","Крус")
+            r=dict(d=d,t=t,code=c["sub"]+c["pot"],pot=c["pn"],tno=i+1,top=T[i],kurs=c["kurs"],
+                   sub=c["sub"],ru=c["ru"],potk=pk,gkod=gk,sd=SUBD[c["sub"]],
                    ty=("Маъруза" if kind=="L" else "Семинар"))
             if kind=="L": r["who"]=[("Бутун поток",c["lect"],c["lroom"])]
             else:
                 r["who"]=[(g,a,b) for a,b,g in c["sems"]]
                 if d in ond: r["on"]=ond[d]
             out.append(r)
-    out.sort(key=lambda r:(r["d"],r["t"],r["code"]))
+    out.sort(key=lambda r:(r["d"],int(r["t"].split(":")[0])*60+int(r["t"].split(":")[1]),r["code"]))
     return out
 
 LESSONS=build()
@@ -234,28 +242,47 @@ def send(text):
     logga("хабар: %d/%d манзилга етди"%(ok,len(ids)))
     return ok>0
 
+def soat(t):
+    h,m=t.split(":"); return "%02d:%s"%(int(h),m)
+
 def block(l):
-    s=["<b>%s</b> · %s · <i>%s</i>"%(l["code"],l["ty"],l["pot"]),
-       "   📖 <b>%d-мавзу.</b> %s"%(l["tno"],l["top"])]
-    if l.get("on"): s.append("   ❗️ <b>%s</b>"%l["on"])
-    s+=["   👤 %s — %s, <b>%s</b>-хона"%(g,a,b) for g,a,b in l["who"]]
+    sd=l.get("sd",l["code"])
+    if l.get("ru") and l.get("sub")=="ДҲН": sd="ТГП"
+    if l.get("ru") and l.get("sub")=="КОНС": sd="КП"
+    ty=("лекция" if l.get("ru") else "маъруза") if l["ty"]=="Маъруза" else "семинар"
+    mav=("тема %d"%l["tno"]) if l.get("ru") else ("%d-мавзу"%l["tno"])
+    s=["<b>%s %s (%s)</b> — %s, %s «%s»"%(sd,l.get("potk",""),l.get("gkod",""),ty,mav,l["top"])]
+    if l["ty"]=="Маъруза":
+        g,a,b=l["who"][0]; s.append("%s (%s)"%(a,b) if b else a)
+    elif len(l["who"])==1:
+        g,a,b=l["who"][0]; s.append("%s (%s)"%(a,b) if b else a)
+    else:
+        s.append(" · ".join("%s %s (%s)"%(g.split("-")[0],a,b) for g,a,b in l["who"]))
+    if l.get("on"): s.append("❗️ <b>%s</b>"%l["on"])
     return "\n".join(s)
 
-def digest():
-    day=dt.datetime.now(TZ).date()+dt.timedelta(days=1)
-    key="digest-%s"%day
-    if already(key): return
+def kun_matni(day):
     ls=[l for l in LES() if l["d"]==day]
-    if not ls: logga("эртага дарс йўқ"); mark(key); return
-    p=["📅 <b>Эртага — %s, %s</b>\nДавлат-ҳуқуқий фанлар кафедраси машғулотлари\n"
-       %(day.strftime("%d.%m.%Y"),KUN[day.weekday()])]
+    h="<b>%s, %s — ДҲФ кафедраси дарслари</b>"%(day.strftime("%d.%m.%Y"),KUN[day.weekday()].upper())
+    if not ls: return h+"\n\nБу куни дарс йўқ."
+    p=[h]
     for t in SLOTLAR():
         cur=[l for l in ls if l["t"]==t]
         if not cur: continue
-        p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
-    p.append("<i>Ҳаммага сермаҳсул иш куни тилаймиз!</i>")
-    if send("\n".join(p).strip()): mark(key)
-    else: logga("дайджест юборилмади, қайта уриниб кўрилади")
+        p.append("<b>%s</b>"%soat(t))
+        p.append("\n\n".join(block(l) for l in cur))
+    return "\n\n".join(p)
+
+def kunlik(day,tur):
+    key="%s-%s"%(tur,day)
+    if already(key): return
+    ls=[l for l in LES() if l["d"]==day]
+    if not ls: logga("%s: %s да дарс йўқ"%(tur,day)); mark(key); return
+    logga("%s хабари: %s (%d дарс)"%(tur,day,len(ls)))
+    if send(kun_matni(day)): mark(key)
+    else: logga("%s хабари ЮБОРИЛМАДИ (%s) — қайта уринилади"%(tur,day))
+
+def digest(): kunlik(dt.datetime.now(TZ).date()+dt.timedelta(days=1),"kech")
 
 def remind(slot):
     now=dt.datetime.now(TZ); today=now.date()
@@ -270,7 +297,7 @@ def remind(slot):
     logga("эслатма: %s (%d дақиқа қолди, %d дарс)"%(slot,qoldi,len(ls)))
     ok=True
     for l in ls:
-        if not send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,slot,block(l))): ok=False
+        if not send("⏰ <b>%d дақиқадан сўнг — %s</b>\n\n%s"%(qoldi,soat(slot),block(l))): ok=False
         time.sleep(1)
     if ok: mark(key)
     else: logga("эслатма ЮБОРИЛМАДИ: %s — қайта уринилади"%slot)
@@ -483,15 +510,7 @@ def reply(cid,text):
         time.sleep(0.3)
 
 def day_text(day,title):
-    ls=[l for l in LES() if l["d"]==day]
-    h="📅 <b>%s — %s, %s</b>"%(title,day.strftime("%d.%m.%Y"),KUN[day.weekday()])
-    if not ls: return h+"\n\nБу куни дарс йўқ."
-    p=[h,""]
-    for t in SLOTLAR():
-        cur=[l for l in ls if l["t"]==t]
-        if not cur: continue
-        p.append("🕘 <b>%s</b>"%t); p+=[block(l) for l in cur]; p.append("")
-    return "\n".join(p).strip()
+    return kun_matni(day)
 
 def week_text(today):
     mon=today-dt.timedelta(days=today.weekday())
@@ -507,8 +526,9 @@ def saqla():
 
 def vazifa():
     now=dt.datetime.now(TZ); today=now.date()
-    if now.hour==18 and not already("digest-%s"%(today+dt.timedelta(days=1))):
-        digest(); saqla()
+    erta=today+dt.timedelta(days=1)
+    if now.hour==18 and not already("kech-%s"%erta): kunlik(erta,"kech"); saqla()
+    if now.hour==8  and not already("erta-%s"%today): kunlik(today,"erta"); saqla()
     if today.weekday()<5:
         for slot in SLOTLAR():
             hh,mm=(int(x) for x in slot.split(":"))
@@ -564,7 +584,8 @@ def loop(daqiqa=330):
 
 if __name__=="__main__":
     c=sys.argv[1] if len(sys.argv)>1 else "test"
-    if c=="digest": digest()
+    if c=="digest": kunlik(dt.datetime.now(TZ).date()+dt.timedelta(days=1),"kech")
+    elif c=="bugun": kunlik(dt.datetime.now(TZ).date(),"erta")
     elif c=="remind": remind(sys.argv[2])
     elif c=="diag": diag()
     elif c=="javob": loop(int(sys.argv[2]) if len(sys.argv)>2 else 25)
