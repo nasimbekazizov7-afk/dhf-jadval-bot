@@ -272,11 +272,58 @@ def diag():
 # ---------- интерфейс ----------
 YOQ="🔔 Эслатмани ёқиш"
 OCH="🔕 Эслатмани ўчириш"
+INFO="ℹ️ Бот нима қила олади"
+
+QISQA=("ДҲФ кафедраси дарс жадвали: бугунги ва эртанги дарслар, ҳафталик жадвал "
+       "ва автоматик эслатмалар.")
+
+TANITISH=("Мен ДҲФ кафедрасининг дарс жадвали ботиман.\n\n"
+ "• Бугунги ва эртанги дарслар — вақти, мавзуси, ўқитувчиси ва аудиторияси билан\n"
+ "• Шу ҳафта жадвали\n"
+ "• Автоматик эслатма: кечқурун 18:00 да эртанги кун, эрталаб 08:00 да бугунги кун "
+ "ва ҳар дарсдан 10 дақиқа олдин\n\n"
+ "Бошлаш учун пастдаги «Ишга тушириш» тугмасини босинг.")
+
+def tanishuv(cid):
+    t=("👋 <b>ДҲФ кафедраси — дарс жадвали боти</b>\n"
+       "1–3-курс жадвали: мавзулар, ўқитувчилар, аудиториялар ва оралиқ назорат кунлари.\n\n"
+       "<b>Нима қила оламан</b>\n"
+       "📅 <b>Бугун</b> ва <b>Эртага</b> — шу куннинг тўлиқ жадвали: вақт, поток, мавзу, "
+       "ўқитувчи ва хона\n"
+       "🗓 <b>Шу ҳафта</b> — душанбадан жумагача\n"
+       "🔔 <b>Эслатма</b> — кечқурун <b>18:00</b> да эртанги кун, эрталаб <b>08:00</b> да "
+       "бугунги кун, ҳар дарсдан <b>10 дақиқа олдин</b> — эслатма\n"
+       "❗️ Оралиқ назорат дарслари алоҳида белгиланади\n\n"
+       "<b>Қандай ишлатилади</b>\n"
+       "Пастдаги тугмаларни босинг ёки /bugun, /ertaga, /hafta деб ёзинг.\n")
+    t+=("🔔 Эслатма ҳозир <b>ёқилган</b>. Ўчириш учун «%s».\n"%OCH) if obunami(cid) else \
+       ("🔕 Эслатма ҳозир ўчиқ. Ёқиш учун «%s» тугмасини босинг.\n"%YOQ)
+    if adminmi(cid): t+="\n🛠 Сиз админсиз — тузатиш буйруқлари: /yordam\n"
+    t+="\nЖадвалда хато кўрсангиз кафедра мудирига айтинг — тузатиш бир дақиқада киритилади."
+    return t
+
+BUYRUQLAR=[{"command":"bugun","description":"Бугунги дарслар"},
+           {"command":"ertaga","description":"Эртанги дарслар"},
+           {"command":"hafta","description":"Шу ҳафта жадвали"},
+           {"command":"obuna","description":"Эслатмани ёқиш"},
+           {"command":"toxtat","description":"Эслатмани ўчириш"},
+           {"command":"yordam","description":"Бот нима қила олади"}]
+
+def sozla():
+    """Ботнинг таърифи, буйруқлар рўйхати ва меню тугмасини Telegram'да янгилайди"""
+    if not TOKEN: return
+    api("setMyShortDescription",{"short_description":QISQA})
+    api("setMyDescription",{"description":TANITISH})
+    api("setMyCommands",{"commands":json.dumps(BUYRUQLAR,ensure_ascii=False)})
+    api("setChatMenuButton",{"menu_button":json.dumps({"type":"commands"})})
+    logga("бот таърифи ва буйруқлар рўйхати янгиланди")
+
 
 def kb(cid):
     uch=[{"text":OCH}] if obunami(cid) else [{"text":YOQ}]
     return {"keyboard":[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],
-                        [{"text":"🗓 Шу ҳафта"}],uch],"resize_keyboard":True}
+                        [{"text":"🗓 Шу ҳафта"},{"text":INFO}],uch],
+            "resize_keyboard":True,"input_field_placeholder":"Тугмани босинг ёки /bugun деб ёзинг"}
 
 def hello(cid):
     h=("👋 <b>ДҲФ кафедраси — дарс жадвали боти</b>\n"
@@ -381,6 +428,7 @@ def admin_buyruq(cid,txt):
             admin_qosh(cid); saqla()
             return "🛠 Сиз админ сифатида қайд этилдингиз.\n\n"+YORDAM
         return YORDAM if adminmi(cid) else "⛔️ Админ аллақачон белгиланган."
+    if bosh=="yordam" and not adminmi(cid): return None
     if not adminmi(cid):
         return "⛔️ Бу буйруқ фақат админ учун."
     if bosh=="yordam": return YORDAM
@@ -503,6 +551,8 @@ def xabarni_qayta_ishla(cid,txt):
     if OCH.lower() in low or low.startswith("/toxtat") or low.startswith("/stop"):
         obuna_ol(cid); saqla()
         reply(cid,"🔕 <b>Эслатма ўчирилди.</b>\nҚайта ёқиш учун «%s» тугмасини босинг."%YOQ); return
+    if low.startswith("/start") or low.startswith("/yordam") or INFO.lower() in low:
+        reply(cid,tanishuv(cid)); return
     if "эртага" in low or low.startswith("/ertaga"):
         reply(cid,day_text(today+dt.timedelta(days=1),"Эртага")); return
     if "ҳафта" in low or low.startswith("/hafta"):
@@ -510,11 +560,14 @@ def xabarni_qayta_ishla(cid,txt):
     if "бугун" in low or low.startswith("/bugun"):
         reply(cid,day_text(today,"Бугун")); return
     reply(cid,hello(cid)+"\n"+day_text(today,"Бугун")+"\n\n"
-          +day_text(today+dt.timedelta(days=1),"Эртага"))
+          +day_text(today+dt.timedelta(days=1),"Эртага")
+          +"\n\n<i>Бот нима қила олишини кўриш учун «%s» тугмасини босинг.</i>"%INFO)
 
 def loop(daqiqa=330):
     if not TOKEN: print("!! TELEGRAM_TOKEN йўқ"); sys.exit(1)
     end=time.time()+daqiqa*60; off=0
+    try: sozla()
+    except Exception as e: logga("созлаш хатоси: %s"%e)
     r=api("getUpdates",{"timeout":0,"offset":-1},timeout=30)
     if r.get("result"): off=r["result"][-1]["update_id"]+1
     logga("цикл бошланди (%d дақиқа, обуна: %d, тузатиш: %d)"
@@ -540,6 +593,7 @@ if __name__=="__main__":
     elif c=="bugun": kunlik(dt.datetime.now(TZ).date(),"erta")
     elif c=="remind": remind(sys.argv[2])
     elif c=="diag": diag()
+    elif c=="sozla": sozla()
     elif c=="javob": loop(int(sys.argv[2]) if len(sys.argv)>2 else 25)
     elif c=="loop": loop(int(sys.argv[2]) if len(sys.argv)>2 else 330)
     else: test()
