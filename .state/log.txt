@@ -90,3 +90,10 @@
 14.09 08:00:24 | erta хабари: 2026-09-14 (8 дарс)
 14.09 08:00:25 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
 14.09 08:00:26 | хабар: 4/5 манзилга етди
+14.09 08:49:30 | эслатма: 9:00 (10 дақиқа қолди, 3 дарс)
+14.09 08:49:31 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
+14.09 08:49:32 | хабар: 4/5 манзилга етди
+14.09 08:49:34 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
+14.09 08:49:35 | хабар: 4/5 манзилга етди
+14.09 08:49:37 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
+14.09 08:49:38 | хабар: 4/5 манзилга етди
