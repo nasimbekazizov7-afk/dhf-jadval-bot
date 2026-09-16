@@ -1,4 +1,3 @@
-10.09 08:49:41 | хабар: 1/2 манзилга етди
 10.09 10:19:36 | эслатма: 10:30 (10 дақиқа қолди, 3 дарс)
 10.09 10:19:37 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
 10.09 10:19:37 | хабар: 1/2 манзилга етди
@@ -248,3 +247,4 @@
 16.09 18:00:08 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 16.09 18:00:11 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 16.09 18:00:16 | хабар: 5/6 манзилга етди
+16.09 19:42:15 | цикл тугади
