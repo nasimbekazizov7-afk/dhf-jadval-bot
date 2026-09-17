@@ -1,9 +1,3 @@
-13.09 18:00:10 | kech хабари: 2026-09-14 (8 дарс)
-13.09 18:00:11 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
-13.09 18:00:15 | хабар: 4/5 манзилга етди
-13.09 21:58:07 | цикл тугади
-14.09 03:28:26 | бот таърифи ва буйруқлар рўйхати янгиланди
-14.09 03:28:27 | цикл бошланди (330 дақиқа, обуна: 4, тузатиш: 0)
 14.09 08:00:24 | erta хабари: 2026-09-14 (8 дарс)
 14.09 08:00:25 | ХАТО -1001901267353 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was kicked from the supergroup chat"}
 14.09 08:00:26 | хабар: 4/5 манзилга етди
@@ -248,3 +242,9 @@
 17.09 13:19:53 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 13:19:57 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 13:20:02 | хабар: 6/7 манзилга етди
+17.09 14:49:53 | эслатма: 15:00 (10 дақиқа қолди, 1 дарс)
+17.09 14:49:54 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+17.09 14:49:54 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+17.09 14:49:57 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+17.09 14:50:01 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+17.09 14:50:06 | хабар: 6/7 манзилга етди
