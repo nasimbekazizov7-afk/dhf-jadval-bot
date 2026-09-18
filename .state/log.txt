@@ -1,4 +1,3 @@
-15.09 08:49:59 | эслатма: 9:00 (10 дақиқа қолди, 2 дарс)
 15.09 08:49:59 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 15.09 08:50:00 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 15.09 08:50:03 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
@@ -248,3 +247,4 @@
 18.09 16:19:59 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 18.09 16:20:05 | хабар: 5/6 манзилга етди
 18.09 18:00:28 | kech: 2026-09-19 да дарс йўқ
+18.09 21:16:43 | цикл тугади
