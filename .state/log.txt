@@ -1,9 +1,3 @@
-17.09 10:19:57 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-17.09 10:20:03 | хабар: 5/6 манзилга етди
-17.09 10:20:04 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-17.09 10:20:05 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-17.09 10:20:08 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-17.09 10:20:11 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 10:20:17 | хабар: 5/6 манзилга етди
 17.09 10:29:13 | янги обуна: 70493992 (жами 6)
 17.09 11:49:53 | эслатма: 12:00 (10 дақиқа қолди, 1 дарс)
@@ -248,3 +242,9 @@
 22.09 14:50:22 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 22.09 14:50:28 | хабар: 5/6 манзилга етди
 22.09 16:19:53 | бугун 16:30 да дарс йўқ
+22.09 18:00:22 | kech хабари: 2026-09-23 (8 дарс)
+22.09 18:00:23 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 18:00:23 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 18:00:27 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 18:00:30 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 18:00:36 | хабар: 5/6 манзилга етди
