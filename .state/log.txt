@@ -1,9 +1,3 @@
-16.09 14:49:48 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-16.09 14:49:52 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-16.09 14:49:56 | хабар: 5/6 манзилга етди
-16.09 16:19:35 | бугун 16:30 да дарс йўқ
-16.09 18:00:04 | kech хабари: 2026-09-17 (9 дарс)
-16.09 18:00:05 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 16.09 18:00:05 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 16.09 18:00:08 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 16.09 18:00:11 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
@@ -248,3 +242,9 @@
 22.09 07:53:56 | цикл тугади
 22.09 07:54:10 | бот таърифи ва буйруқлар рўйхати янгиланди
 22.09 07:54:11 | цикл бошланди (330 дақиқа, обуна: 5, тузатиш: 0)
+22.09 08:00:18 | erta хабари: 2026-09-22 (7 дарс)
+22.09 08:00:18 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 08:00:19 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 08:00:22 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 08:00:25 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+22.09 08:00:31 | хабар: 5/6 манзилга етди
