@@ -1,5 +1,4 @@
 17.09 22:35:13 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-17.09 22:35:13 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 22:35:17 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 22:35:20 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 17.09 22:35:23 | ХАТО 5416159817 (1): 403 {"ok":false,"error_code":403,"description":"Forbidden: bot was blocked by the user"}
@@ -248,3 +247,4 @@
 23.09 18:00:08 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 23.09 18:00:12 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 23.09 18:00:17 | хабар: 5/6 манзилга етди
+23.09 22:26:59 | цикл тугади
