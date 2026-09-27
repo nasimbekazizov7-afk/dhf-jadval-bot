@@ -298,13 +298,21 @@ YOQ="🔔 Эслатмани ёқиш"
 OCH="🔕 Эслатмани ўчириш"
 INFO="ℹ️ Бот нима қила олади"
 KEYIN="🗓 Кейинги ҳафта"
+OQLAR="👨‍🏫 Ўқитувчилар"
+KUNTANLA="📆 Кун танлаш"
+SANAQ="🔎 Сана бўйича"
+ORQA="⬅️ Орқага"
+BARCHASI="👥 Барчаси (кафедра)"
+KUNNOM=["Душанба","Сешанба","Чоршанба","Пайшанба","Жума"]
 
-QISQA=("ДҲФ кафедраси дарс жадвали: бугунги ва эртанги дарслар, ҳафталик жадвал "
-       "ва автоматик эслатмалар.")
+QISQA=("ДҲФ кафедраси дарс жадвали: бугун, эртага, ҳафталик жадвал, ўқитувчилар кесими, "
+       "исталган сана бўйича қидирув ва автоматик эслатмалар.")
 
 TANITISH=("Мен ДҲФ кафедрасининг дарс жадвали ботиман.\n\n"
  "• Бугунги ва эртанги дарслар — вақти, мавзуси, ўқитувчиси ва аудиторияси билан\n"
- "• Шу ҳафта жадвали\n"
+ "• Шу ҳафта ва кейинги ҳафта жадвали\n"
+ "• Ўқитувчилар кесимида шахсий жадвал\n"
+ "• Ҳафта куни ёки исталган сана бўйича қидирув\n"
  "• Автоматик эслатма: кечқурун 18:00 да эртанги кун, эрталаб 08:00 да бугунги кун "
  "ва ҳар дарсдан 10 дақиқа олдин\n\n"
  "Бошлаш учун пастдаги «Ишга тушириш» тугмасини босинг.")
@@ -316,12 +324,18 @@ def tanishuv(cid):
        "📅 <b>Бугун</b> ва <b>Эртага</b> — шу куннинг тўлиқ жадвали: вақт, поток, мавзу, "
        "ўқитувчи ва хона\n"
        "🗓 <b>Шу ҳафта</b> ва <b>Кейинги ҳафта</b> — душанбадан жумагача\n"
+       "👨‍🏫 <b>Ўқитувчилар</b> — ҳар бир домланинг шахсий ҳафталик жадвали, "
+       "«👥 Барчаси» эса бутун кафедраники\n"
+       "📆 <b>Кун танлаш</b> — душанба…жума: ўша кунги энг яқин дарслар\n"
+       "🔎 <b>Сана бўйича</b> — исталган санани ёзинг (<code>05.11</code> ёки "
+       "<code>05.11.2026</code>), ўтган ва келгуси кунлар ҳам топилади\n"
        "📌 Шанба-якшанба куни «Бугун» ёки «Эртага» босилса — <b>душанбанинг</b> жадвали чиқади\n"
        "🔔 <b>Эслатма</b> — кечқурун <b>18:00</b> да эртанги кун, эрталаб <b>08:00</b> да "
        "бугунги кун, ҳар дарсдан <b>10 дақиқа олдин</b> — эслатма\n"
        "❗️ Оралиқ назорат дарслари алоҳида белгиланади\n\n"
        "<b>Қандай ишлатилади</b>\n"
-       "Пастдаги тугмаларни босинг ёки /bugun, /ertaga, /hafta деб ёзинг.\n")
+       "Пастдаги тугмаларни босинг ёки /bugun, /ertaga, /hafta, /oqituvchi, /kun деб ёзинг.\n"
+       "Домла фамилиясини ёки санани (масалан <code>05.11.2026</code>) шундайича ёзсангиз ҳам бўлади.\n")
     t+=("🔔 Эслатма ҳозир <b>ёқилган</b>. Ўчириш учун «%s».\n"%OCH) if obunami(cid) else \
        ("🔕 Эслатма ҳозир ўчиқ. Ёқиш учун «%s» тугмасини босинг.\n"%YOQ)
     if adminmi(cid): t+="\n🛠 Сиз админсиз — тузатиш буйруқлари: /yordam\n"
@@ -332,6 +346,9 @@ BUYRUQLAR=[{"command":"bugun","description":"Бугунги дарслар"},
            {"command":"ertaga","description":"Эртанги дарслар"},
            {"command":"hafta","description":"Шу ҳафта жадвали"},
            {"command":"keyingi","description":"Кейинги ҳафта жадвали"},
+           {"command":"oqituvchi","description":"Ўқитувчи бўйича жадвал"},
+           {"command":"kun","description":"Ҳафта куни бўйича"},
+           {"command":"sana","description":"Исталган сана бўйича қидирув"},
            {"command":"obuna","description":"Эслатмани ёқиш"},
            {"command":"toxtat","description":"Эслатмани ўчириш"},
            {"command":"yordam","description":"Бот нима қила олади"}]
@@ -350,7 +367,8 @@ def kb(cid):
     uch=[{"text":OCH}] if obunami(cid) else [{"text":YOQ}]
     return {"keyboard":[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],
                         [{"text":"🗓 Шу ҳафта"},{"text":KEYIN}],
-                        [{"text":INFO}],uch],
+                        [{"text":OQLAR},{"text":KUNTANLA}],
+                        [{"text":SANAQ},{"text":INFO}],uch],
             "resize_keyboard":True,"input_field_placeholder":"Тугмани босинг ёки /bugun деб ёзинг"}
 
 def hello(cid):
@@ -529,10 +547,10 @@ def chunks(s,n=3500):
     if cur: out.append(cur)
     return out
 
-def reply(cid,text):
+def reply(cid,text,markup=None):
     for part in chunks(text):
         api("sendMessage",{"chat_id":cid,"text":part,"parse_mode":"HTML",
-            "disable_web_page_preview":"true","reply_markup":json.dumps(kb(cid))})
+            "disable_web_page_preview":"true","reply_markup":json.dumps(markup or kb(cid))})
         time.sleep(0.3)
 
 def day_text(day,title):
@@ -565,6 +583,98 @@ def week_text(today,keyingi=False):
     bor=[d for d in kunlar if dars_bormi(d)]
     if not bor: return sarlavha+"\nБу ҳафтада дарс йўқ."
     return sarlavha+"\n"+"\n\n".join(kun_matni(d) for d in bor)
+
+# ---------- ўқитувчи / кун / сана ----------
+def oq_royxat():
+    """Жадвалдаги барча ўқитувчилар (бугундан кейинги дарслар бўйича)"""
+    bugun=dt.datetime.now(TZ).date(); s=set()
+    for l in LES():
+        if l["d"]>=bugun:
+            for g,a,b in l["who"]:
+                if a: s.add(a)
+    if not s:
+        for l in LES():
+            for g,a,b in l["who"]:
+                if a: s.add(a)
+    return sorted(s)
+
+def oq_top(nom):
+    """Ёзилган матнга мос ўқитувчини топади (фамилия ёки тўлиқ)"""
+    n=nom.strip().lower().replace("ё","е")
+    for a in oq_royxat():
+        x=a.lower().replace("ё","е")
+        if n==x or n==x.split(".")[-1] or (len(n)>3 and n in x): return a
+    return None
+
+def oq_blok(l,nom):
+    ty=("лекция" if l["ru"] else "маъруза") if l["ty"]=="Маъруза" else "семинар"
+    mav=("тема %d"%l["tno"]) if l["ru"] else ("%d-мавзу"%l["tno"])
+    w=[x for x in l["who"] if x[1]==nom] or l["who"]
+    joy=" · ".join((("%s "%g.split("-")[0]) if l["ty"]!="Маъруза" and len(l["who"])>1 else "")+("(%s)"%b if b else "") for g,a,b in w)
+    return "<b>%s</b> — %s %s <b>%s</b>, %s «%s»"%(soat(l["t"]),l["sd"],l["potk"],ty,mav,l["top"])+(("\n"+joy) if joy.strip() else "")
+
+def oq_hafta(nom,mon):
+    kunlar=[mon+dt.timedelta(days=i) for i in range(5)]
+    p=["👨‍🏫 <b>%s</b> — %s – %s ҳафтаси"%(nom,kunlar[0].strftime("%d.%m"),kunlar[-1].strftime("%d.%m.%Y"))]
+    bor=False
+    for d in kunlar:
+        ls=[l for l in LES() if l["d"]==d and any(x[1]==nom for x in l["who"])]
+        if not ls: continue
+        bor=True
+        ls.sort(key=lambda x:(int(x["t"].split(":")[0]),int(x["t"].split(":")[1])))
+        p.append("<b>%s, %s</b>\n"%(d.strftime("%d.%m.%Y"),KUN[d.weekday()].upper())
+                 +"\n".join(oq_blok(l,nom) for l in ls))
+    if not bor: p.append("Бу ҳафтада дарси йўқ.")
+    return "\n\n".join(p)
+
+def oq_javobi(nom,today):
+    mon=today-dt.timedelta(days=today.weekday())
+    if today.weekday()>=5: mon=mon+dt.timedelta(days=7)
+    t=oq_hafta(nom,mon)
+    if "Бу ҳафтада дарси йўқ." in t:
+        t2=oq_hafta(nom,mon+dt.timedelta(days=7))
+        if "Бу ҳафтада дарси йўқ." not in t2: return t+"\n\n"+t2
+    return t
+
+def kb_oq():
+    r=[]; o=oq_royxat()
+    for i in range(0,len(o),2):
+        r.append([{"text":x} for x in o[i:i+2]])
+    r.append([{"text":BARCHASI}]); r.append([{"text":ORQA}])
+    return {"keyboard":r,"resize_keyboard":True,"input_field_placeholder":"Ўқитувчини танланг"}
+
+def kb_kun():
+    return {"keyboard":[[{"text":KUNNOM[0]},{"text":KUNNOM[1]}],
+                        [{"text":KUNNOM[2]},{"text":KUNNOM[3]}],
+                        [{"text":KUNNOM[4]},{"text":ORQA}]],
+            "resize_keyboard":True,"input_field_placeholder":"Ҳафта кунини танланг"}
+
+def keyingi_kun(today,wd):
+    """wd (0–4) ҳафта кунининг энг яқин санаси"""
+    d=today+dt.timedelta(days=(wd-today.weekday())%7)
+    if d<today: d+=dt.timedelta(days=7)
+    for i in range(0,28,7):
+        x=d+dt.timedelta(days=i)
+        if dars_bormi(x): return x
+    return d
+
+SANA_RE=re.compile(r"^\s*(\d{1,2})[.\-/](\d{1,2})(?:[.\-/](\d{2,4}))?\s*$")
+def sana_qidir(txt):
+    m=SANA_RE.match(txt)
+    if not m: return None
+    n=dt.datetime.now(TZ).date()
+    d,mo=int(m.group(1)),int(m.group(2))
+    y=int(m.group(3)) if m.group(3) else n.year
+    if y<100: y+=2000
+    try: return dt.date(y,mo,d)
+    except Exception: return None
+
+def sana_javobi(d):
+    h="🔎 <b>%s, %s</b>\n"%(d.strftime("%d.%m.%Y"),KUN[d.weekday()].upper())
+    if dars_bormi(d): return kun_matni(d)
+    y=yaqin_kun(d+dt.timedelta(days=1))
+    if not y: return h+"\nБу куни дарс йўқ (семестр жадвалида бу сана йўқ)."
+    return h+"\nБу куни дарс йўқ. Энг яқин дарс куни — <b>%s</b>:\n\n"%y.strftime("%d.%m.%Y")+kun_matni(y)
 
 def saqla():
     if not os.environ.get("GITHUB_ACTIONS"): return
@@ -604,6 +714,31 @@ def xabarni_qayta_ishla(cid,txt):
         reply(cid,"🔕 <b>Эслатма ўчирилди.</b>\nҚайта ёқиш учун «%s» тугмасини босинг."%YOQ); return
     if low.startswith("/start") or low.startswith("/yordam") or INFO.lower() in low:
         reply(cid,tanishuv(cid)); return
+    if txt.strip()==ORQA or low.startswith("/orqaga"):
+        reply(cid,"Асосий меню 👇"); return
+    if txt.strip()==OQLAR or low.startswith("/oqituvchi") or low.startswith("/domlalar"):
+        o=oq_royxat()
+        reply(cid,"👨‍🏫 <b>Ўқитувчини танланг</b> (%d та):\n\n"%len(o)
+              +" · ".join(o)+"\n\nЁки фамилиясини ёзинг. <b>%s</b> — бутун кафедра жадвали."%BARCHASI,
+              markup=kb_oq()); return
+    if txt.strip()==BARCHASI:
+        reply(cid,week_text(today),markup=kb_oq()); return
+    if txt.strip()==KUNTANLA or low.startswith("/kun"):
+        reply(cid,"📆 <b>Ҳафта кунини танланг</b> — ўша кунги энг яқин дарслар чиқади.",markup=kb_kun()); return
+    if txt.strip() in KUNNOM:
+        wd=KUNNOM.index(txt.strip())
+        reply(cid,kun_matni(keyingi_kun(today,wd)),markup=kb_kun()); return
+    if txt.strip()==SANAQ or low.startswith("/sana"):
+        q=txt.split(None,1)[1] if (low.startswith("/sana") and len(txt.split())>1) else ""
+        d=sana_qidir(q) if q else None
+        if d: reply(cid,sana_javobi(d)); return
+        reply(cid,"🔎 <b>Сана бўйича қидирув</b>\n\nСанани ёзиб юборинг, мен ўша куннинг жадвалини кўрсатаман.\n"
+                  "Масалан: <code>05.11</code> ёки <code>05.11.2026</code>\n"
+                  "Ўтган кунларни ҳам, келгуси кунларни ҳам қидириш мумкин."); return
+    _d=sana_qidir(txt)
+    if _d: reply(cid,sana_javobi(_d)); return
+    _o=oq_top(txt)
+    if _o and len(txt.strip())>3: reply(cid,oq_javobi(_o,today),markup=kb_oq()); return
     if KEYIN.lower() in low or "кейинги ҳафта" in low or low.startswith("/keyingi"):
         reply(cid,week_text(today,keyingi=True)); return
     if "эртага" in low or low.startswith("/ertaga"):
