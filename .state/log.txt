@@ -1,9 +1,3 @@
-22.09 14:50:00 | эслатма: 15:00 (10 дақиқа қолди, 2 дарс)
-22.09 14:50:00 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-22.09 14:50:00 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-22.09 14:50:04 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-22.09 14:50:08 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-22.09 14:50:13 | хабар: 5/6 манзилга етди
 22.09 14:50:15 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 22.09 14:50:15 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 22.09 14:50:19 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
@@ -248,3 +242,9 @@
 28.09 11:49:53 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 28.09 11:49:56 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 28.09 11:50:01 | хабар: 5/6 манзилга етди
+28.09 13:19:51 | эслатма: 13:30 (10 дақиқа қолди, 1 дарс)
+28.09 13:19:51 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+28.09 13:19:51 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+28.09 13:19:55 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+28.09 13:19:58 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+28.09 13:20:03 | хабар: 5/6 манзилга етди
