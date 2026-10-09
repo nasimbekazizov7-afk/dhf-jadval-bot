@@ -1,5 +1,4 @@
 05.10 18:00:27 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-05.10 18:00:27 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 05.10 18:00:30 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 05.10 18:00:33 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 05.10 18:00:39 | хабар: 6/7 манзилга етди
@@ -248,3 +247,4 @@
 09.10 10:19:59 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 09.10 10:20:04 | хабар: 6/7 манзилга етди
 09.10 11:49:37 | бугун 12:00 да дарс йўқ
+09.10 12:55:34 | цикл тугади
