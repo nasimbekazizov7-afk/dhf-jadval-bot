@@ -1,14 +1,3 @@
-19.10 10:20:02 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:05 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:12 | хабар: 6/7 манзилга етди
-19.10 10:20:13 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:13 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:17 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:20 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 10:20:27 | хабар: 6/7 манзилга етди
-19.10 11:49:56 | эслатма: 12:00 (10 дақиқа қолди, 1 дарс)
-19.10 11:49:57 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-19.10 11:49:57 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 19.10 11:50:01 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 19.10 11:50:04 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 19.10 11:50:11 | хабар: 6/7 манзилга етди
@@ -248,3 +237,14 @@
 23.10 08:00:04 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 23.10 08:00:07 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 23.10 08:00:14 | хабар: 7/8 манзилга етди
+23.10 08:49:30 | эслатма: 9:00 (10 дақиқа қолди, 2 дарс)
+23.10 08:49:31 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:31 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:34 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:38 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:43 | хабар: 7/8 манзилга етди
+23.10 08:49:45 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:45 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:48 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:51 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+23.10 08:49:57 | хабар: 7/8 манзилга етди
