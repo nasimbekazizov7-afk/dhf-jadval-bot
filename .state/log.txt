@@ -1,5 +1,4 @@
 29.10 10:19:49 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-29.10 10:19:49 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 29.10 10:19:53 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 29.10 10:19:56 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 29.10 10:20:02 | хабар: 7/8 манзилга етди
@@ -248,3 +247,4 @@
 03.11 19:17:11 | цикл тугади
 03.11 19:17:24 | бот таърифи ва буйруқлар рўйхати янгиланди
 03.11 19:17:24 | цикл бошланди (330 дақиқа, обуна: 7, тузатиш: 0)
+04.11 00:47:33 | цикл тугади
