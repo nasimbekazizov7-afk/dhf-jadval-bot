@@ -1,4 +1,3 @@
-02.11 18:00:18 | kech хабари: 2026-11-03 (7 дарс)
 02.11 18:00:18 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 02.11 18:00:19 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 02.11 18:00:22 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
@@ -248,3 +247,4 @@
 06.11 10:19:40 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 06.11 10:19:43 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 06.11 10:19:51 | хабар: 8/9 манзилга етди
+06.11 11:49:54 | бугун 12:00 да дарс йўқ
