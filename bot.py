@@ -719,9 +719,11 @@ def _par(text,bold=False,size=18,al="left",after=0):
     return ('<w:p><w:pPr><w:spacing w:before="20" w:after="%d" w:line="240" w:lineRule="auto"/>'
             '<w:jc w:val="%s"/></w:pPr>%s</w:p>'%(after,al,runs))
 
-def _tc(text,w,bold=False,al="left",span=1,fill=None,size=18):
+def _tc(text,w,bold=False,al="left",span=1,fill=None,size=18,vm=None):
     pr='<w:tcW w:w="%d" w:type="dxa"/>'%w
     if span>1: pr+='<w:gridSpan w:val="%d"/>'%span
+    if vm=="restart": pr+='<w:vMerge w:val="restart"/>'
+    elif vm=="cont": pr+='<w:vMerge/>'
     if fill: pr+='<w:shd w:val="clear" w:color="auto" w:fill="%s"/>'%fill
     pr+=('<w:tcMar><w:top w:w="20" w:type="dxa"/><w:left w:w="60" w:type="dxa"/>'
          '<w:bottom w:w="20" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>'
@@ -739,8 +741,8 @@ def _tbl(widths,rows,sarlavha=2):
     return ('<w:tbl><w:tblPr><w:tblW w:w="%d" w:type="dxa"/>%s<w:tblLayout w:type="fixed"/></w:tblPr>'
             '<w:tblGrid>%s</w:tblGrid>%s</w:tbl>'%(sum(widths),b,grid,body))
 
-W=[950,3600,1600,3722,900]
-WT=[4000,2000,2000,2772]
+W=[900,2300,1500,6000,4100,904]
+WT=[5000,3000,3000,4704]
 
 def hafta_docx(mon):
     """mon — ҳафтанинг душанбаси; .docx файл байтларини қайтаради"""
@@ -757,12 +759,14 @@ def hafta_docx(mon):
         bor=True
         ls.sort(key=lambda x:(int(x["t"].split(":")[0]),int(x["t"].split(":")[1]),x["code"]))
         rows=[[_tc("%s  %s"%(d.strftime("%d.%m.%Y"),KUN[d.weekday()].upper()),
-                   sum(W),True,"left",span=5,fill="D9D9D9")],
+                   sum(W),True,"left",span=6,fill="D9D9D9")],
               [_tc("ВАҚТ",W[0],True,"center",fill="F2F2F2"),
                _tc("ФАН / ГУРУҲ",W[1],True,"center",fill="F2F2F2"),
                _tc("ДАРС ТУРИ",W[2],True,"center",fill="F2F2F2"),
-               _tc("ЎҚИТУВЧИ",W[3],True,"center",fill="F2F2F2"),
-               _tc("ХОНА",W[4],True,"center",fill="F2F2F2")]]
+               _tc("МАВЗУ",W[3],True,"center",fill="F2F2F2"),
+               _tc("ЎҚИТУВЧИ",W[4],True,"center",fill="F2F2F2"),
+               _tc("ХОНА",W[5],True,"center",fill="F2F2F2")]]
+        oldingi_vaqt=None
         for l in ls:
             tur=("Лекция" if l["ru"] else "Маъруза") if l["ty"]=="Маъруза" else "Семинар"
             if l.get("on"): tur+=" — "+l["on"]
@@ -774,9 +778,15 @@ def hafta_docx(mon):
                 oq="\n".join("%s %s"%(g.split("-")[0],a) for g,a,b in l["who"])
                 xona="\n".join((b or "") for g,a,b in l["who"])
                 for g,a,b in l["who"]: sem[a]+=1
-            rows.append([_tc(soat(l["t"]),W[0],False,"center"),_tc(nom,W[1]),
-                         _tc(tur,W[2],False,"center"),_tc(oq,W[3]),
-                         _tc(xona,W[4],False,"center")])
+            mav=("тема %d. %s" if l["ru"] else "%d-мавзу. %s")%(l["tno"],l["top"])
+            if l["t"]==oldingi_vaqt:
+                vaqt_kat=_tc("",W[0],vm="cont")
+            else:
+                vaqt_kat=_tc(soat(l["t"]),W[0],True,"center",vm="restart")
+                oldingi_vaqt=l["t"]
+            rows.append([vaqt_kat,_tc(nom,W[1]),
+                         _tc(tur,W[2],False,"center"),_tc(mav,W[3],size=16),
+                         _tc(oq,W[4]),_tc(xona,W[5],False,"center")])
         parts.append(_tbl(W,rows)); parts.append(_par("",False,12))
     if not bor: parts.append(_par("Бу ҳафтада дарс йўқ.",False,22,"center"))
     # ўқитувчилар кесими
@@ -798,7 +808,7 @@ def hafta_docx(mon):
                       "алоҳида дарс сифатида ҳисобланган.",False,16,"left",0))
     doc=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
          '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-         '<w:body>%s<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+         '<w:body>%s<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>'
          '<w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" w:header="283" '
          'w:footer="283" w:gutter="0"/></w:sectPr></w:body></w:document>'%"".join(parts))
     ct=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
