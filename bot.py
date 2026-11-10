@@ -318,6 +318,7 @@ OCH="🔕 Эслатмани ўчириш"
 INFO="ℹ️ Бот нима қила олади"
 KEYIN="🗓 Кейинги ҳафта"
 OQLAR="👨‍🏫 Ўқитувчилар"
+WORDJ="📄 Ҳафталик жадвал (Word)"
 KUNTANLA="📆 Кун танлаш"
 SANAQ="🔎 Сана бўйича"
 ORQA="⬅️ Орқага"
@@ -357,7 +358,11 @@ def tanishuv(cid):
        "Домла фамилиясини ёки санани (масалан <code>05.11.2026</code>) шундайича ёзсангиз ҳам бўлади.\n")
     t+=("🔔 Эслатма ҳозир <b>ёқилган</b>. Ўчириш учун «%s».\n"%OCH) if obunami(cid) else \
        ("🔕 Эслатма ҳозир ўчиқ. Ёқиш учун «%s» тугмасини босинг.\n"%YOQ)
-    if adminmi(cid): t+="\n🛠 Сиз админсиз — тузатиш буйруқлари: /yordam\n"
+    if adminmi(cid):
+        t+=("\n🛠 Сиз админсиз:\n"
+            "📄 <b>%s</b> — бутун ҳафта жадвали Word (.docx) файл бўлиб келади "
+            "(кейинги ҳафта учун <code>/word keyingi</code>)\n"
+            "Тузатиш буйруқлари: /yordam\n"%WORDJ)
     t+="\nЖадвалда хато кўрсангиз кафедра мудирига айтинг — тузатиш бир дақиқада киритилади."
     return t
 
@@ -368,6 +373,7 @@ BUYRUQLAR=[{"command":"bugun","description":"Бугунги дарслар"},
            {"command":"oqituvchi","description":"Ўқитувчи бўйича жадвал"},
            {"command":"kun","description":"Ҳафта куни бўйича"},
            {"command":"sana","description":"Исталган сана бўйича қидирув"},
+           {"command":"word","description":"Ҳафталик жадвал — Word (админ)"},
            {"command":"obuna","description":"Эслатмани ёқиш"},
            {"command":"toxtat","description":"Эслатмани ўчириш"},
            {"command":"yordam","description":"Бот нима қила олади"}]
@@ -384,10 +390,13 @@ def sozla():
 
 def kb(cid):
     uch=[{"text":OCH}] if obunami(cid) else [{"text":YOQ}]
-    return {"keyboard":[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],
-                        [{"text":"🗓 Шу ҳафта"},{"text":KEYIN}],
-                        [{"text":OQLAR},{"text":KUNTANLA}],
-                        [{"text":SANAQ},{"text":INFO}],uch],
+    qatorlar=[[{"text":"📅 Бугун"},{"text":"📅 Эртага"}],
+              [{"text":"🗓 Шу ҳафта"},{"text":KEYIN}],
+              [{"text":OQLAR},{"text":KUNTANLA}],
+              [{"text":SANAQ},{"text":INFO}]]
+    if adminmi(cid): qatorlar.append([{"text":WORDJ}])
+    qatorlar.append(uch)
+    return {"keyboard":qatorlar,
             "resize_keyboard":True,"input_field_placeholder":"Тугмани босинг ёки /bugun деб ёзинг"}
 
 def hello(cid):
@@ -695,6 +704,162 @@ def sana_javobi(d):
     if not y: return h+"\nБу куни дарс йўқ (семестр жадвалида бу сана йўқ)."
     return h+"\nБу куни дарс йўқ. Энг яқин дарс куни — <b>%s</b>:\n\n"%y.strftime("%d.%m.%Y")+kun_matni(y)
 
+# ---------- Word (.docx) ҳафталик жадвал ----------
+def _x(s):
+    return (str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+            .replace('"',"&quot;"))
+
+def _par(text,bold=False,size=18,al="left",after=0):
+    runs=""
+    for i,line in enumerate(str(text).split("\n")):
+        if i: runs+='<w:r><w:br/></w:r>'
+        runs+=('<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>'
+               '%s<w:sz w:val="%d"/></w:rPr><w:t xml:space="preserve">%s</w:t></w:r>'
+               %("<w:b/>" if bold else "",size,_x(line)))
+    return ('<w:p><w:pPr><w:spacing w:before="20" w:after="%d" w:line="240" w:lineRule="auto"/>'
+            '<w:jc w:val="%s"/></w:pPr>%s</w:p>'%(after,al,runs))
+
+def _tc(text,w,bold=False,al="left",span=1,fill=None,size=18):
+    pr='<w:tcW w:w="%d" w:type="dxa"/>'%w
+    if span>1: pr+='<w:gridSpan w:val="%d"/>'%span
+    if fill: pr+='<w:shd w:val="clear" w:color="auto" w:fill="%s"/>'%fill
+    pr+=('<w:tcMar><w:top w:w="20" w:type="dxa"/><w:left w:w="60" w:type="dxa"/>'
+         '<w:bottom w:w="20" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>'
+         '<w:vAlign w:val="center"/>')
+    return '<w:tc><w:tcPr>%s</w:tcPr>%s</w:tc>'%(pr,_par(text,bold,size,al))
+
+def _tbl(widths,rows,sarlavha=2):
+    b=("<w:tblBorders>"+ "".join('<w:%s w:val="single" w:sz="6" w:space="0" w:color="000000"/>'%s
+        for s in ("top","left","bottom","right","insideH","insideV"))+"</w:tblBorders>")
+    grid="".join('<w:gridCol w:w="%d"/>'%w for w in widths)
+    body=""
+    for i,c in enumerate(rows):
+        pr="<w:trPr><w:cantSplit/>"+("<w:tblHeader/>" if i<sarlavha else "")+"</w:trPr>"
+        body+="<w:tr>"+pr+"".join(c)+"</w:tr>"
+    return ('<w:tbl><w:tblPr><w:tblW w:w="%d" w:type="dxa"/>%s<w:tblLayout w:type="fixed"/></w:tblPr>'
+            '<w:tblGrid>%s</w:tblGrid>%s</w:tbl>'%(sum(widths),b,grid,body))
+
+W=[950,3600,1600,3722,900]
+WT=[4000,2000,2000,2772]
+
+def hafta_docx(mon):
+    """mon — ҳафтанинг душанбаси; .docx файл байтларини қайтаради"""
+    import io,zipfile,collections
+    kunlar=[mon+dt.timedelta(days=i) for i in range(5)]
+    parts=[_par("ҲАФТАЛИК ДАРС ЖАДВАЛИ",True,28,"center"),
+           _par("%s – %s"%(kunlar[0].strftime("%d.%m.%Y"),kunlar[-1].strftime("%d.%m.%Y")),
+                False,20,"center",120)]
+    mar=collections.Counter(); sem=collections.Counter()
+    bor=False
+    for d in kunlar:
+        ls=[l for l in LES() if l["d"]==d]
+        if not ls: continue
+        bor=True
+        ls.sort(key=lambda x:(int(x["t"].split(":")[0]),int(x["t"].split(":")[1]),x["code"]))
+        rows=[[_tc("%s  %s"%(d.strftime("%d.%m.%Y"),KUN[d.weekday()].upper()),
+                   sum(W),True,"left",span=5,fill="D9D9D9")],
+              [_tc("ВАҚТ",W[0],True,"center",fill="F2F2F2"),
+               _tc("ФАН / ГУРУҲ",W[1],True,"center",fill="F2F2F2"),
+               _tc("ДАРС ТУРИ",W[2],True,"center",fill="F2F2F2"),
+               _tc("ЎҚИТУВЧИ",W[3],True,"center",fill="F2F2F2"),
+               _tc("ХОНА",W[4],True,"center",fill="F2F2F2")]]
+        for l in ls:
+            tur=("Лекция" if l["ru"] else "Маъруза") if l["ty"]=="Маъруза" else "Семинар"
+            if l.get("on"): tur+=" — "+l["on"]
+            nom="%s %s (%s)"%(l["sd"],l["potk"],l["gkod"])
+            if l["ty"]=="Маъруза" or len(l["who"])==1:
+                oq=l["who"][0][1]; xona=l["who"][0][2] or ""
+                (mar if l["ty"]=="Маъруза" else sem)[oq]+=1
+            else:
+                oq="\n".join("%s %s"%(g.split("-")[0],a) for g,a,b in l["who"])
+                xona="\n".join((b or "") for g,a,b in l["who"])
+                for g,a,b in l["who"]: sem[a]+=1
+            rows.append([_tc(soat(l["t"]),W[0],False,"center"),_tc(nom,W[1]),
+                         _tc(tur,W[2],False,"center"),_tc(oq,W[3]),
+                         _tc(xona,W[4],False,"center")])
+        parts.append(_tbl(W,rows)); parts.append(_par("",False,12))
+    if not bor: parts.append(_par("Бу ҳафтада дарс йўқ.",False,22,"center"))
+    # ўқитувчилар кесими
+    parts.append(_par("ЎҚИТУВЧИЛАР БЎЙИЧА ДАРСЛАР СОНИ",True,22,"left",60))
+    hamma=sorted(set(list(mar)+list(sem)),key=lambda n:-(mar[n]+sem[n]))
+    trows=[[_tc("ЎҚИТУВЧИ",WT[0],True,"center",fill="F2F2F2"),
+            _tc("МАЪРУЗА",WT[1],True,"center",fill="F2F2F2"),
+            _tc("СЕМИНАР",WT[2],True,"center",fill="F2F2F2"),
+            _tc("ЖАМИ",WT[3],True,"center",fill="F2F2F2")]]
+    for n in hamma:
+        trows.append([_tc(n,WT[0]),_tc(mar[n] or "–",WT[1],False,"center"),
+                      _tc(sem[n] or "–",WT[2],False,"center"),
+                      _tc(mar[n]+sem[n],WT[3],True,"center")])
+    trows.append([_tc("ЖАМИ",WT[0],True),_tc(sum(mar.values()),WT[1],True,"center"),
+                  _tc(sum(sem.values()),WT[2],True,"center"),
+                  _tc(sum(mar.values())+sum(sem.values()),WT[3],True,"center")])
+    parts.append(_tbl(WT,trows,1))
+    parts.append(_par("Изоҳ: маъруза бутун потокка бир дарс, семинар эса ҳар бир гуруҳ учун "
+                      "алоҳида дарс сифатида ҳисобланган.",False,16,"left",0))
+    doc=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+         '<w:body>%s<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+         '<w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" w:header="283" '
+         'w:footer="283" w:gutter="0"/></w:sectPr></w:body></w:document>'%"".join(parts))
+    ct=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
+        '</Types>')
+    rels=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+          '</Relationships>')
+    drels=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+           '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+           '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+           '</Relationships>')
+    styles=('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" '
+            'w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="20"/></w:rPr></w:rPrDefault>'
+            '<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault>'
+            '</w:docDefaults>'
+            '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'
+            '</w:styles>')
+    buf=io.BytesIO()
+    with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml",ct)
+        z.writestr("_rels/.rels",rels)
+        z.writestr("word/_rels/document.xml.rels",drels)
+        z.writestr("word/document.xml",doc)
+        z.writestr("word/styles.xml",styles)
+    return buf.getvalue()
+
+def hujjat(cid,nom,bayt,izoh=""):
+    """Telegram'га .docx файл юборади"""
+    import urllib.error
+    chiz="----dhfbot%d"%int(time.time()*1000)
+    b=[]
+    def fld(n,v):
+        b.append(("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n"%(chiz,n,v)).encode("utf-8"))
+    fld("chat_id",str(cid))
+    if izoh:
+        fld("caption",izoh); fld("parse_mode","HTML")
+    b.append(("--%s\r\nContent-Disposition: form-data; name=\"document\"; filename=\"%s\"\r\n"
+              "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              "\r\n\r\n"%(chiz,nom)).encode("utf-8"))
+    b.append(bayt); b.append(("\r\n--%s--\r\n"%chiz).encode("utf-8"))
+    data=b"".join(b)
+    req=urllib.request.Request("https://api.telegram.org/bot%s/sendDocument"%TOKEN,data=data,
+        headers={"Content-Type":"multipart/form-data; boundary=%s"%chiz})
+    try:
+        urllib.request.urlopen(req,timeout=90); return True
+    except urllib.error.HTTPError as e:
+        d=""
+        try: d=e.read().decode("utf-8","replace")[:200]
+        except Exception: pass
+        logga("ХУЖЖАТ ХАТО %s: %s %s"%(cid,e.code,d)); return False
+    except Exception as e:
+        logga("ХУЖЖАТ ХАТО %s: %s"%(cid,e)); return False
+
 def saqla():
     if not os.environ.get("GITHUB_ACTIONS"): return
     os.system('git config user.name "dhf-bot"; '
@@ -733,6 +898,24 @@ def xabarni_qayta_ishla(cid,txt):
         reply(cid,"🔕 <b>Эслатма ўчирилди.</b>\nҚайта ёқиш учун «%s» тугмасини босинг."%YOQ); return
     if low.startswith("/start") or low.startswith("/yordam") or INFO.lower() in low:
         reply(cid,tanishuv(cid)); return
+    if txt.strip()==WORDJ or low.startswith("/word") or low.startswith("/jadval"):
+        if not adminmi(cid):
+            reply(cid,"⛔️ Бу функция фақат кафедра админлари учун."); return
+        keyingi=("keyingi" in low) or ("кейинги" in low)
+        mon=today-dt.timedelta(days=today.weekday())
+        if keyingi or today.weekday()>=5: mon=mon+dt.timedelta(days=7)
+        reply(cid,"⏳ Word жадвал тайёрланмоқда…")
+        try: bayt=hafta_docx(mon)
+        except Exception as e:
+            logga("docx хато: %s"%e); reply(cid,"❌ Жадвал тузилмади: %s"%e); return
+        oxir=mon+dt.timedelta(days=4)
+        nom="Haftalik_jadval_%s-%s.docx"%(mon.strftime("%d.%m"),oxir.strftime("%d.%m.%Y"))
+        izoh=("📄 <b>Ҳафталик дарс жадвали</b>\n%s – %s\n\n"
+              "Кейинги ҳафта учун: <code>/word keyingi</code>"
+              %(mon.strftime("%d.%m.%Y"),oxir.strftime("%d.%m.%Y")))
+        if not hujjat(cid,nom,bayt,izoh):
+            reply(cid,"❌ Файл юборилмади, қайтадан уриниб кўринг.")
+        return
     if txt.strip()==ORQA or low.startswith("/orqaga"):
         reply(cid,"Асосий меню 👇"); return
     if txt.strip()==OQLAR or low.startswith("/oqituvchi") or low.startswith("/domlalar"):
