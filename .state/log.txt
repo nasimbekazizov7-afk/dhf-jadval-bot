@@ -1,9 +1,3 @@
-20.11 08:50:10 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-20.11 08:50:13 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-20.11 08:50:19 | хабар: 8/9 манзилга етди
-20.11 10:19:37 | эслатма: 10:30 (10 дақиқа қолди, 1 дарс)
-20.11 10:19:38 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
-20.11 10:19:38 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 20.11 10:19:41 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 20.11 10:19:44 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 20.11 10:19:50 | хабар: 8/9 манзилга етди
@@ -248,3 +242,9 @@
 25.11 11:42:15 | цикл тугади
 25.11 11:42:25 | бот таърифи ва буйруқлар рўйхати янгиланди
 25.11 11:42:26 | цикл бошланди (330 дақиқа, обуна: 8, тузатиш: 0)
+25.11 11:49:32 | эслатма: 12:00 (10 дақиқа қолди, 1 дарс)
+25.11 11:49:32 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+25.11 11:49:32 | ХАТО -1001901267353 (1): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+25.11 11:49:36 | ХАТО -1001901267353 (2): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+25.11 11:49:39 | ХАТО -1001901267353 (3): 400 {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+25.11 11:49:46 | хабар: 8/9 манзилга етди
